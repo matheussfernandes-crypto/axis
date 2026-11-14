@@ -66,7 +66,7 @@ export default function PushRegistrar() {
     <div
       style={{
         position: "fixed",
-        bottom: 16,
+        bottom: "calc(16px + env(safe-area-inset-bottom) + var(--barra-inferior, 0px))",
         left: "50%",
         transform: "translateX(-50%)",
         zIndex: 9999,

@@ -128,3 +128,32 @@ button.nav-group-label:hover {
 .table-scroll table {
   min-width: 640px;
 }
+
+/* ── iPhone e iPad ───────────────────────────────────────────────── */
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+a, button, [role="button"], label, select, summary { touch-action: manipulation; }
+
+/* Toque (iPhone/iPad): campos com 16px para o Safari não dar zoom ao tocar no campo */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea, .sbj-sel { font-size: 16px !important; }
+  input:not([type="checkbox"]):not([type="radio"]), select { min-height: 44px; }
+  .sbj-pg-btn { min-width: 40px; height: 40px; }
+  .sbj-aba { min-height: 40px; }
+}
+
+/* Tabelas largas rolam de lado com o dedo, sem quebrar a página */
+.card-table, .table-scroll { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+
+/* Menu lateral e sobreposições respeitam o notch do iPhone */
+aside { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+/* Datas e selects nativos do iOS com a cara do sistema */
+input[type="date"], input[type="month"] { -webkit-appearance: none; appearance: none; background-color: #fff; }
+input[type="date"]::-webkit-date-and-time-value { text-align: left; }
+
+/* Telas do celular: cards e títulos um pouco mais compactos */
+@media (max-width: 639px) {
+  .card { padding: 16px; border-radius: 14px; }
+}
+@media (max-width: 1023px) { :root { --barra-inferior: 60px; } }

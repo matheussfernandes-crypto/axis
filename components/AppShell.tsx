@@ -9,6 +9,7 @@ import Breadcrumbs from "./Breadcrumbs";
 import { sair } from "@/app/auth-actions";
 import { itemDeCaminho, permitido } from "@/lib/acessos/modulos";
 import SemAcesso from "./SemAcesso";
+import BarraInferior from "./BarraInferior";
 
 import TemaAlternar from "./TemaAlternar";
 import NotificacoesPopover from "./NotificacoesPopover";
@@ -39,12 +40,12 @@ export default function AppShell({
       <Sidebar setor={setor} extras={extras} contadores={contadores} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
 
       <div className="flex-1 min-w-0 flex flex-col min-h-screen">
-        <header className="print:hidden h-16 shrink-0 bg-white border-b border-border flex items-center justify-between gap-3 px-4 lg:px-6">
+        <header className="print:hidden sticky top-0 z-20 shrink-0 bg-white/95 backdrop-blur border-b border-border flex items-center justify-between gap-3 px-4 lg:px-6 h-16 box-content pt-[env(safe-area-inset-top)]">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileOpen(true)}
-              className="lg:hidden text-ink-700 hover:text-primary p-2 -ml-2"
+              className="lg:hidden text-ink-700 hover:text-primary w-11 h-11 -ml-2 flex items-center justify-center"
               aria-label="Abrir menu"
             >
               <Menu className="w-5 h-5" />
@@ -63,15 +64,16 @@ export default function AppShell({
 
             <TemaAlternar />
             <form action={sair}>
-              <button type="submit" className="text-ink-500 hover:text-danger">
+              <button type="submit" className="text-ink-500 hover:text-danger min-h-[44px] px-1">
                 Sair
               </button>
             </form>
           </div>
         </header>
 
-        <main className="flex-1 p-4 lg:p-8 space-y-4 print:p-0">{liberado ? children : <SemAcesso modulo={modulo!} />}</main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-4 print:p-0 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">{liberado ? children : <SemAcesso modulo={modulo!} />}</main>
       </div>
+      <BarraInferior onMenu={() => setMobileOpen(true)} />
     </div>
   );
 }
