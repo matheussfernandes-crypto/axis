@@ -33,6 +33,7 @@ export type ItemMedido = {
 
 export type ValeDesconto = {
   vale_id: string;
+  tipo: "VALE" | "DESCONTO";
   numero: number;
   data: string;
   mes_referencia: string;
@@ -101,7 +102,7 @@ export async function calcularBoletim(
   // com a retenção vigente do mês. Nada é gravado.
   let previaLancamento: number | null = null;
   const lancs = (lancsDb ?? []).map((l: any) => {
-    if (l.id !== opts.previaLancamentoId || l.status !== "PENDENTE" || l.tipo === "VALE" || l.mes_referencia !== mes) return l;
+    if (l.id !== opts.previaLancamentoId || l.status !== "PENDENTE" || l.tipo === "VALE" || l.tipo === "DESCONTO" || l.mes_referencia !== mes) return l;
     previaLancamento = l.numero;
     const bruto = arred((l.contrato_lancamento_itens ?? []).reduce((s: number, li: any) => s + Number(li.quantidade_medida) * Number(li.valor_unitario), 0));
     const pctRet = retencaoVigente((retHist ?? []) as any, l.mes_referencia);
@@ -119,7 +120,7 @@ export async function calcularBoletim(
   });
 
   const aprovados = (lancs ?? []).filter((l: any) => l.status === "APROVADO");
-  const comItens = aprovados.filter((l: any) => l.tipo !== "VALE");
+  const comItens = aprovados.filter((l: any) => l.tipo !== "VALE" && l.tipo !== "DESCONTO");
 
   const linhas: LinhaBoletim[] = (itens ?? [])
     .map((i: any) => {
@@ -198,7 +199,7 @@ export async function calcularBoletim(
 
   // Vales (adiantamentos) aprovados até o mês, com o que já foi descontado.
   const valesAprov = aprovados
-    .filter((l: any) => l.tipo === "VALE" && l.mes_referencia <= mes)
+    .filter((l: any) => (l.tipo === "VALE" || l.tipo === "DESCONTO") && l.mes_referencia <= mes)
     .sort((a: any, b: any) => (a.data < b.data ? -1 : a.data > b.data ? 1 : a.numero - b.numero));
   const valeIds = valesAprov.map((v: any) => v.id);
   const { data: descontos } = valeIds.length
@@ -225,6 +226,7 @@ export async function calcularBoletim(
     if (agora > 0 || restanteDepois > 0.004) {
       vales.push({
         vale_id: v.id,
+        tipo: v.tipo,
         numero: v.numero,
         data: v.data,
         mes_referencia: v.mes_referencia,

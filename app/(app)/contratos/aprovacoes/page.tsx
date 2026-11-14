@@ -14,6 +14,7 @@ const TIPO_COR: Record<string, string> = {
   MEDICAO: "bg-primary/10 text-primaryDark",
   VALE: "bg-accent/40 text-ink-900",
   VALE_MEDICAO: "bg-amber-100 text-amber-900",
+  DESCONTO: "bg-red-100 text-danger",
 };
 
 export default async function AprovacoesContratosPage({
@@ -82,7 +83,7 @@ export default async function AprovacoesContratosPage({
         </label>
         <label className="flex flex-col gap-1 text-xs text-ink-500">Tipo
           <Selecao name="tipo" defaultValue={searchParams.tipo ?? ""} className="border rounded px-2 py-2 text-sm text-ink-900">
-            <option value="">Todos</option><option value="MEDICAO">Medição</option><option value="VALE">Vale</option><option value="VALE_MEDICAO">Vale de medição</option>
+            <option value="">Todos</option><option value="MEDICAO">Medição</option><option value="VALE">Vale</option><option value="VALE_MEDICAO">Vale de medição</option><option value="DESCONTO">Desconto / multa</option>
           </Selecao>
         </label>
       </FormFiltro>
@@ -137,10 +138,9 @@ export default async function AprovacoesContratosPage({
                   {dataBR(l.data)} · ref. {mesLabel(l.mes_referencia)} · {nomes[l.criado_por] ?? "—"}{l.editado_em ? " · editado" : ""}
                 </span>
               </div>
-              {l.tipo !== "VALE" && (
+              {l.tipo !== "VALE" && l.tipo !== "DESCONTO" && (
                 <a
                   href={`/contratos/fechamento/pdf?contrato=${l.contrato_id}&mes=${l.mes_referencia}&previa=${l.id}`}
-                  target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-primary/5"
                 >
@@ -151,7 +151,7 @@ export default async function AprovacoesContratosPage({
               {fotosL.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {fotosL.map((f: any) => (
-                    <a key={f.storage_path} href={links[f.storage_path]} target="_blank" rel="noreferrer" className="block">
+                    <a key={f.storage_path} href={links[f.storage_path]} rel="noreferrer" className="block">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={links[f.storage_path]} alt="foto do serviço" className="h-20 w-20 object-cover rounded border" />
                     </a>

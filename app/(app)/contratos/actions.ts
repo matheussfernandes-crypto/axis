@@ -493,7 +493,12 @@ export async function salvarLancamento(fd: FormData): Promise<Resultado> {
   const data = txt(fd, "data") || new Date().toISOString().slice(0, 10);
   const mes = txt(fd, "mes") || data.slice(0, 7);
   const observacao = txt(fd, "observacao") || null;
-  if (!["MEDICAO", "VALE", "VALE_MEDICAO"].includes(tipo)) return { erro: "Tipo de lançamento inválido." };
+  const avaliacaoContratado = txt(fd, "avaliacaoContratado") || null;
+  if (!["MEDICAO", "VALE", "VALE_MEDICAO", "DESCONTO"].includes(tipo)) return { erro: "Tipo de lançamento inválido." };
+  if ((tipo === "MEDICAO" || tipo === "VALE_MEDICAO") && !["RUIM", "RAZOAVEL", "BOM", "EXCELENTE"].includes(avaliacaoContratado ?? "")) {
+    return { erro: "Avalie o contratado (Ruim, Razoável, Bom ou Excelente) para registrar a medição." };
+  }
+  if (tipo === "DESCONTO" && !observacao) return { erro: "Descreva o motivo do desconto/multa." };
 
   const contrato = await contratoInfo(p.supabase, contratoId);
   if (!contrato) return { erro: "Contrato não encontrado." };
@@ -515,9 +520,9 @@ export async function salvarLancamento(fd: FormData): Promise<Resultado> {
   let valorVale = 0;
   const linhas: any[] = [];
 
-  if (tipo === "VALE") {
+  if (tipo === "VALE" || tipo === "DESCONTO") {
     valorVale = parseNum(fd.get("valorVale"));
-    if (valorVale <= 0) return { erro: "Informe o valor do vale." };
+    if (valorVale <= 0) return { erro: tipo === "DESCONTO" ? "Informe o valor do desconto/multa." : "Informe o valor do vale." };
   } else {
     let itens: ItemLancado[] = [];
     try { itens = JSON.parse(txt(fd, "itens") || "[]"); } catch { return { erro: "Itens inválidos." }; }
@@ -559,8 +564,9 @@ export async function salvarLancamento(fd: FormData): Promise<Resultado> {
 
   const campos = {
     tipo, data, mes_referencia: mes, observacao,
-    valor_medido: tipo === "VALE" ? valorVale : valorMedido,
+    valor_medido: tipo === "VALE" || tipo === "DESCONTO" ? valorVale : valorMedido,
     valor_vale: valorVale,
+    avaliacao_contratado: tipo === "MEDICAO" || tipo === "VALE_MEDICAO" ? avaliacaoContratado : null,
   };
 
   let id = lancamentoId;
@@ -590,7 +596,7 @@ export async function salvarLancamento(fd: FormData): Promise<Resultado> {
     }
   }
 
-  const valor = tipo === "VALE" ? valorVale : valorMedido;
+  const valor = tipo === "VALE" || tipo === "DESCONTO" ? valorVale : valorMedido;
   if (!p.ehAdmin || anterior) {
     notificarAdmins({
       title: anterior ? `${TIPO_LANC_LABEL[tipo]} editado(a)` : `Novo(a) ${TIPO_LANC_LABEL[tipo].toLowerCase()} de contrato`,
@@ -768,7 +774,7 @@ export async function aprovarLancamentoContrato(fd: FormData): Promise<Resultado
   let teveGlosa = false;
   const glosasResumo: string[] = [];
 
-  if (l.tipo === "VALE") {
+  if (l.tipo === "VALE" || l.tipo === "DESCONTO") {
     bruto = Number(l.valor_vale);
   } else {
     let glosas: Glosa[] = [];
@@ -806,7 +812,7 @@ export async function aprovarLancamentoContrato(fd: FormData): Promise<Resultado
   let retValor = 0;
   let aplicada = true;
   let motivoDispensa: string | null = null;
-  if (l.tipo !== "VALE") {
+  if (l.tipo !== "VALE" && l.tipo !== "DESCONTO") {
     const { data: hist } = await p.supabase.from("contrato_retencoes").select("vigente_desde, percent").eq("contrato_id", l.contrato_id);
     retPct = retencaoVigente((hist ?? []) as any, l.mes_referencia);
     aplicada = fd.get("aplicarRetencao") !== "0";

@@ -7,6 +7,14 @@ export const TIPO_LANC_LABEL: Record<string, string> = {
   MEDICAO: "Medição",
   VALE: "Vale",
   VALE_MEDICAO: "Vale de medição",
+  DESCONTO: "Desconto / multa",
+};
+
+export const AVALIACAO_LABEL: Record<string, string> = {
+  RUIM: "Ruim",
+  RAZOAVEL: "Razoável",
+  BOM: "Bom",
+  EXCELENTE: "Excelente",
 };
 
 export const STATUS_LANC_LABEL: Record<string, string> = {

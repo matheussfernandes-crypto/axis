@@ -57,7 +57,7 @@ export async function carregarPainelObras() {
       dataEntregaPrevista: o.data_entrega_prevista ?? null,
       medidoMes:
         soma(l.filter((x: any) => x.status === "APROVADO" && x.tipo !== "VALE"), "total_reais") +
-        soma(c.filter((x: any) => x.status === "APROVADO" && x.tipo !== "VALE"), "valor_bruto"),
+        soma(c.filter((x: any) => x.status === "APROVADO" && x.tipo !== "VALE" && x.tipo !== "DESCONTO"), "valor_bruto"),
       valesMes:
         soma(l.filter((x: any) => x.status === "APROVADO" && x.tipo === "VALE"), "total_reais") +
         soma(c.filter((x: any) => x.status === "APROVADO" && x.tipo === "VALE"), "valor_vale"),

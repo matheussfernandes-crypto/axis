@@ -109,13 +109,14 @@ export default async function FechamentoContratosPage({
 
           <div className="grid lg:grid-cols-2 gap-4">
             <section className="card space-y-2 text-sm">
-              <h2 className="font-semibold text-primaryDark">Vales (adiantamentos)</h2>
+              <h2 className="font-semibold text-primaryDark">Vales e descontos</h2>
               {b.vales.length ? (
                 <ul className="divide-y">
                   {b.vales.map((v) => (
-                    <li key={v.vale_id} className="py-2">
-                      Vale nº {v.numero} · {dataBR(v.data)} · {brl(v.valor_vale)}
-                      <span className="block text-xs text-ink-500">
+                    <li key={v.vale_id} className={`py-2 ${v.tipo === "DESCONTO" ? "text-danger" : ""}`}>
+                      {v.tipo === "DESCONTO" ? "Desconto/multa" : "Vale"} nº {v.numero} · {dataBR(v.data)} · {brl(v.valor_vale)}
+                      {v.observacao && <span className="block text-xs">{v.observacao}</span>}
+                      <span className={`block text-xs ${v.tipo === "DESCONTO" ? "" : "text-ink-500"}`}>
                         Desconta agora <b>{brl(v.descontar_agora)}</b>
                         {v.ja_descontado > 0 ? ` · já descontado ${brl(v.ja_descontado)}` : ""}
                         {v.restante_depois > 0 ? ` · passa para o próximo mês ${brl(v.restante_depois)}` : ""}
@@ -123,7 +124,7 @@ export default async function FechamentoContratosPage({
                     </li>
                   ))}
                 </ul>
-              ) : <p className="text-ink-400">Nenhum vale a descontar.</p>}
+              ) : <p className="text-ink-400">Nenhum vale ou desconto a abater.</p>}
               {b.valesMedicao.length > 0 && (
                 <p className="text-xs text-ink-500 border-t pt-2">
                   Vales de medição no mês (já pagos, não descontam de novo): bruto {brl(b.valeMedicaoBruto)} · retenção {brl(b.valeMedicaoRetido)} · líquido pago {brl(b.valeMedicaoLiquido)}
@@ -146,7 +147,7 @@ export default async function FechamentoContratosPage({
           </div>
 
           <div className="card flex flex-wrap items-center gap-3">
-            <a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${mes}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
+            <a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${mes}`} rel="noreferrer" className="inline-flex items-center gap-2 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
               <FileDown className="w-4 h-4" /> {b.fechamento ? "Boletim em PDF" : "Ver PDF antes de fechar"}
             </a>
             {!b.fechamento ? (
@@ -180,7 +181,7 @@ export default async function FechamentoContratosPage({
                       <td className="py-2 text-right">{brl(f.retencao_valor)}</td>
                       <td className="py-2 text-right">{brl(f.vales_descontados)}</td>
                       <td className="py-2 text-right font-semibold">{brl(f.valor_liquido)}</td>
-                      <td className="py-2 text-right"><a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${f.mes_referencia}`} target="_blank" rel="noreferrer" className="text-xs text-primary underline">PDF</a></td>
+                      <td className="py-2 text-right"><a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${f.mes_referencia}`} rel="noreferrer" className="text-xs text-primary underline">PDF</a></td>
                     </tr>
                   ))}
                 </TabelaPaginada>

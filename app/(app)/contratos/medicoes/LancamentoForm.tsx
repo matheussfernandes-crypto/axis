@@ -25,21 +25,30 @@ type Linha = { itemId: string; modo: "QTD" | "PCT"; valor: string };
 
 export type Edicao = {
   id: string;
-  tipo: "MEDICAO" | "VALE" | "VALE_MEDICAO";
+  tipo: "MEDICAO" | "VALE" | "VALE_MEDICAO" | "DESCONTO";
   data: string;
   mes: string;
   observacao: string | null;
   valorVale: number;
+  avaliacaoContratado: string | null;
   linhas: Linha[];
 };
 
-type Aba = "MEDICAO" | "VALE" | "VALE_MEDICAO" | "ADITIVO";
+type Aba = "MEDICAO" | "VALE" | "VALE_MEDICAO" | "DESCONTO" | "ADITIVO";
 
 const ABAS: { id: Aba; label: string; desc: string }[] = [
   { id: "MEDICAO", label: "Nova medição", desc: "Serviço executado no período. Retenção aplicada na aprovação e vales descontados no fechamento do mês." },
   { id: "VALE", label: "Vale", desc: "Adiantamento em dinheiro, sem serviço medido. É descontado do líquido da próxima medição fechada." },
   { id: "VALE_MEDICAO", label: "Vale de medição", desc: "Antecipa o pagamento de um serviço já executado: abate o saldo do item, retenção calculada na hora e não é descontado de novo no fechamento." },
+  { id: "DESCONTO", label: "Desconto / multa", desc: "Valor a descontar do contratado por algum motivo (atraso, não conformidade etc.). Aparece em vermelho e é abatido do líquido como um vale." },
   { id: "ADITIVO", label: "Solicitar aditivo", desc: "Precisa medir além do contratado ou um serviço que não está no contrato? Peça ao ADM." },
+];
+
+const AVALIACOES: { id: "RUIM" | "RAZOAVEL" | "BOM" | "EXCELENTE"; label: string; cor: string }[] = [
+  { id: "RUIM", label: "Ruim", cor: "border-danger text-danger data-[on=true]:bg-danger data-[on=true]:text-white" },
+  { id: "RAZOAVEL", label: "Razoável", cor: "border-amber-500 text-amber-700 data-[on=true]:bg-amber-500 data-[on=true]:text-white" },
+  { id: "BOM", label: "Bom", cor: "border-primary text-primary data-[on=true]:bg-primary data-[on=true]:text-white" },
+  { id: "EXCELENTE", label: "Excelente", cor: "border-success text-success data-[on=true]:bg-success data-[on=true]:text-white" },
 ];
 
 export default function LancamentoForm({
@@ -60,6 +69,7 @@ export default function LancamentoForm({
   const [mes, setMes] = useState(edicao?.mes ?? mesAtual());
   const [obs, setObs] = useState(edicao?.observacao ?? "");
   const [valorVale, setValorVale] = useState(edicao?.valorVale ? String(edicao.valorVale) : "");
+  const [avaliacao, setAvaliacao] = useState<"" | "RUIM" | "RAZOAVEL" | "BOM" | "EXCELENTE">((edicao?.avaliacaoContratado as any) ?? "");
   const [fotos, setFotos] = useState<File[]>([]);
   const [confirmando, setConfirmando] = useState(false);
   const [msg, setMsg] = useState<{ erro?: string; ok?: string } | null>(null);
@@ -83,8 +93,13 @@ export default function LancamentoForm({
   const disponiveis = itens.filter((i) => i.ativo && !linhas.some((l) => l.itemId === i.id));
 
   const ehVale = aba === "VALE";
-  const valorEnvio = ehVale ? parseNum(valorVale) : total;
-  const podeEnviar = ehVale ? valorEnvio > 0 : calc.some((c) => c.quantidade > 0) && !excedidos.length;
+  const ehDesconto = aba === "DESCONTO";
+  const ehValorFixo = ehVale || ehDesconto;
+  const precisaAvaliacao = aba === "MEDICAO" || aba === "VALE_MEDICAO";
+  const valorEnvio = ehValorFixo ? parseNum(valorVale) : total;
+  const podeEnviar =
+    (ehValorFixo ? valorEnvio > 0 && (!ehDesconto || obs.trim().length > 0) : calc.some((c) => c.quantidade > 0) && !excedidos.length) &&
+    (!precisaAvaliacao || avaliacao !== "");
 
   function setLinha(idx: number, patch: Partial<Linha>) {
     setLinhas((ls) => ls.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -99,7 +114,8 @@ export default function LancamentoForm({
     fd.set("data", data);
     fd.set("mes", mes);
     fd.set("observacao", obs);
-    if (ehVale) fd.set("valorVale", valorVale);
+    if (precisaAvaliacao) fd.set("avaliacaoContratado", avaliacao);
+    if (ehValorFixo) fd.set("valorVale", valorVale);
     else fd.set("itens", JSON.stringify(calc.map((c) => ({ itemId: c.itemId, modo: c.modo, valor: parseNum(c.valor) }))));
     start(async () => {
       const r = await salvarLancamento(fd);
@@ -113,7 +129,7 @@ export default function LancamentoForm({
       if (edicao) {
         router.push(`/contratos/medicoes?contrato=${contrato.id}`);
       } else {
-        setLinhas([]); setObs(""); setValorVale("");
+        setLinhas([]); setObs(""); setValorVale(""); setAvaliacao("");
         setMsg({ ok: r.ok });
       }
       router.refresh();
@@ -188,14 +204,33 @@ export default function LancamentoForm({
           <div className="flex flex-wrap gap-3 text-xs">
             <label className="flex flex-col gap-1">Data<DataCampo value={data} onChange={setData} /></label>
             <label className="flex flex-col gap-1">Mês de referência<MesCampo value={mes} onChange={setMes} /></label>
-            {ehVale && (
-              <label className="flex flex-col gap-1">Valor do vale (R$)
-                <input inputMode="decimal" value={valorVale} onChange={(e) => setValorVale(e.target.value)} className="border rounded px-2 py-2 text-sm w-40" />
+            {ehValorFixo && (
+              <label className="flex flex-col gap-1">Valor {ehDesconto ? "do desconto/multa" : "do vale"} (R$)
+                <input inputMode="decimal" value={valorVale} onChange={(e) => setValorVale(e.target.value)} className={`border rounded px-2 py-2 text-sm w-40 ${ehDesconto ? "border-danger" : ""}`} />
               </label>
             )}
           </div>
 
-          {!ehVale && (
+          {precisaAvaliacao && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs text-ink-500">Avaliação do contratado nesta medição *</span>
+              <div className="flex flex-wrap gap-2">
+                {AVALIACOES.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    data-on={avaliacao === a.id}
+                    onClick={() => setAvaliacao(a.id)}
+                    className={`rounded-lg border px-3 py-1.5 text-sm font-semibold transition ${a.cor}`}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!ehValorFixo && (
             <>
               <div className="table-scroll">
                 <table className="w-full text-sm">
@@ -314,11 +349,17 @@ export default function LancamentoForm({
             </>
           )}
 
-          <label className="flex flex-col gap-1 text-xs">Observação
-            <input value={obs} onChange={(e) => setObs(e.target.value)} className="border rounded px-2 py-2 text-sm" placeholder={ehVale ? "Ex.: adiantamento solicitado pela empresa" : "Ex.: pavimentos 3 ao 5, torre A"} />
+          <label className="flex flex-col gap-1 text-xs">Observação{ehDesconto ? " — motivo do desconto/multa *" : ""}
+            <input
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              required={ehDesconto}
+              className={`border rounded px-2 py-2 text-sm ${ehDesconto ? "border-danger" : ""}`}
+              placeholder={ehDesconto ? "Ex.: atraso na entrega do serviço, retrabalho por não conformidade" : ehVale ? "Ex.: adiantamento solicitado pela empresa" : "Ex.: pavimentos 3 ao 5, torre A"}
+            />
           </label>
 
-          {!ehVale && (
+          {!ehValorFixo && (
             <label className="inline-flex items-center gap-2 text-xs text-primary font-semibold cursor-pointer w-fit">
               <Camera className="w-4 h-4" />
               {fotos.length ? `${fotos.length} foto(s) selecionada(s)` : "Anexar fotos do serviço (opcional)"}
@@ -328,7 +369,10 @@ export default function LancamentoForm({
 
           <div className="flex flex-wrap items-center gap-3 border-t pt-3">
             <div className="text-sm">
-              <span className="text-ink-500">Total: </span><b className="text-lg text-primaryDark">{brl(valorEnvio)}</b>
+              <span className="text-ink-500">Total: </span><b className={`text-lg ${ehDesconto ? "text-danger" : "text-primaryDark"}`}>{brl(valorEnvio)}</b>
+              {ehDesconto && valorEnvio > 0 && (
+                <span className="block text-xs text-ink-500">Será abatido do líquido da próxima medição fechada, como um vale.</span>
+              )}
               {aba === "VALE_MEDICAO" && valorEnvio > 0 && (
                 <span className="block text-xs text-ink-500">Retenção prevista {pct(retencaoPct)}: {brl((valorEnvio * retencaoPct) / 100)} · líquido {brl(valorEnvio - (valorEnvio * retencaoPct) / 100)}</span>
               )}

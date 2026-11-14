@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Camera } from "lucide-react";
 import { exigirPerfil, itensComSaldo, listarContratos, nomesUsuarios, urlsAssinadas } from "@/lib/contratos/server";
 import {
-  SETORES_LANCAM_CONTRATO, TIPO_LANC_LABEL, STATUS_LANC_LABEL,
+  SETORES_LANCAM_CONTRATO, TIPO_LANC_LABEL, STATUS_LANC_LABEL, AVALIACAO_LABEL,
   brl, num, mesAtual, mesLabel, dataBR, dataHoraBR, retencaoVigente,
 } from "@/lib/contratos/util";
 import FormAcao from "@/components/contratos/FormAcao";
@@ -98,7 +98,7 @@ async function ContratoSelecionado({
     supabase.from("contrato_retencoes").select("vigente_desde, percent").eq("contrato_id", contratoId),
     supabase
       .from("contrato_lancamentos")
-      .select("id, numero, tipo, data, mes_referencia, status, valor_medido, valor_bruto, retencao_aplicada, retencao_valor, retencao_dispensa_motivo, valor_liquido, valor_vale, teve_glosa, observacao, criado_por, criado_em, editado_em, motivo_rejeicao, contrato_lancamento_itens(id, item_id, modo, percentual, quantidade_medida, quantidade_aprovada, motivo_glosa)")
+      .select("id, numero, tipo, data, mes_referencia, status, valor_medido, valor_bruto, retencao_aplicada, retencao_valor, retencao_dispensa_motivo, valor_liquido, valor_vale, avaliacao_contratado, teve_glosa, observacao, criado_por, criado_em, editado_em, motivo_rejeicao, contrato_lancamento_itens(id, item_id, modo, percentual, quantidade_medida, quantidade_aprovada, motivo_glosa)")
       .eq("contrato_id", contratoId)
       .order("criado_em", { ascending: false })
       .limit(60),
@@ -124,6 +124,7 @@ async function ContratoSelecionado({
         mes: editando.mes_referencia,
         observacao: editando.observacao,
         valorVale: Number(editando.valor_vale),
+        avaliacaoContratado: editando.avaliacao_contratado,
         linhas: (editando.contrato_lancamento_itens ?? []).map((li: any) => ({
           itemId: li.item_id,
           modo: li.modo,
@@ -198,7 +199,7 @@ async function ContratoSelecionado({
                   <tr key={l.id} className="border-b align-top">
                     <td className="py-2 pr-2">{l.numero}</td>
                     <td className="py-2 pr-2 whitespace-nowrap">{dataBR(l.data)}</td>
-                    <td className="py-2 pr-2">{TIPO_LANC_LABEL[l.tipo]}</td>
+                    <td className={`py-2 pr-2 ${l.tipo === "DESCONTO" ? "text-danger font-semibold" : ""}`}>{TIPO_LANC_LABEL[l.tipo]}</td>
                     <td className="py-2 pr-2">{mesLabel(l.mes_referencia)}</td>
                     <td className="py-2 pr-2 text-xs">
                       {(l.contrato_lancamento_itens ?? []).map((li: any) => {
@@ -212,7 +213,10 @@ async function ContratoSelecionado({
                           </span>
                         );
                       })}
-                      {l.observacao && <span className="block text-ink-500">{l.observacao}</span>}
+                      {l.avaliacao_contratado && (
+                        <span className="block font-semibold">Avaliação: {AVALIACAO_LABEL[l.avaliacao_contratado] ?? l.avaliacao_contratado}</span>
+                      )}
+                      {l.observacao && <span className={`block ${l.tipo === "DESCONTO" ? "text-danger" : "text-ink-500"}`}>{l.observacao}</span>}
                       {fotosL.length > 0 && (
                         <span className="flex flex-wrap gap-2 mt-1">
                           {fotosL.map((f: any) => (
@@ -221,11 +225,11 @@ async function ContratoSelecionado({
                         </span>
                       )}
                       {l.status === "REJEITADO" && l.motivo_rejeicao && <span className="block text-danger">Rejeitado: {l.motivo_rejeicao}</span>}
-                      {l.status === "APROVADO" && !l.retencao_aplicada && l.tipo !== "VALE" && <span className="block text-ink-500">Retenção dispensada: {l.retencao_dispensa_motivo}</span>}
+                      {l.status === "APROVADO" && !l.retencao_aplicada && l.tipo !== "VALE" && l.tipo !== "DESCONTO" && <span className="block text-ink-500">Retenção dispensada: {l.retencao_dispensa_motivo}</span>}
                     </td>
-                    <td className="py-2 pr-2 text-right whitespace-nowrap">
-                      {brl(l.status === "APROVADO" ? l.valor_bruto : l.valor_medido)}
-                      {l.status === "APROVADO" && l.tipo !== "VALE" && <span className="block text-[10px] text-ink-400">ret. {brl(l.retencao_valor)} · líq. {brl(l.valor_liquido)}</span>}
+                    <td className={`py-2 pr-2 text-right whitespace-nowrap ${l.tipo === "DESCONTO" ? "text-danger font-semibold" : ""}`}>
+                      {l.tipo === "DESCONTO" ? "− " : ""}{brl(l.status === "APROVADO" ? l.valor_bruto : l.valor_medido)}
+                      {l.status === "APROVADO" && l.tipo !== "VALE" && l.tipo !== "DESCONTO" && <span className="block text-[10px] text-ink-400">ret. {brl(l.retencao_valor)} · líq. {brl(l.valor_liquido)}</span>}
                     </td>
                     <td className="py-2 pr-2 text-xs">
                       {nomes[l.criado_por] ?? "—"}

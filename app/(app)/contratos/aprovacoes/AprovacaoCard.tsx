@@ -48,9 +48,10 @@ export default function AprovacaoCard({
     const excede = q - l.quantidade_medida > l.saldoLivre + EPS;
     return { ...l, q, glosa, excede, total: q * l.valor_unitario, totalMedido: l.quantidade_medida * l.valor_unitario };
   });
-  const bruto = tipo === "VALE" ? valorVale : calc.reduce((s, c) => s + c.total, 0);
-  const medido = tipo === "VALE" ? valorVale : calc.reduce((s, c) => s + c.totalMedido, 0);
-  const ret = tipo === "VALE" || !aplicarRet ? 0 : (bruto * retencaoPct) / 100;
+  const ehValorFixo = tipo === "VALE" || tipo === "DESCONTO";
+  const bruto = ehValorFixo ? valorVale : calc.reduce((s, c) => s + c.total, 0);
+  const medido = ehValorFixo ? valorVale : calc.reduce((s, c) => s + c.totalMedido, 0);
+  const ret = ehValorFixo || !aplicarRet ? 0 : (bruto * retencaoPct) / 100;
   const faltaMotivo = calc.some((c) => c.glosa && !motivos[c.id]?.trim());
   const algumExcede = calc.some((c) => c.excede);
 
@@ -82,7 +83,7 @@ export default function AprovacaoCard({
 
   return (
     <div className="space-y-3">
-      {tipo !== "VALE" && (
+      {!ehValorFixo && (
         <div className="table-scroll">
           <table className="w-full text-sm">
             <thead>
@@ -134,7 +135,7 @@ export default function AprovacaoCard({
       )}
 
       <div className="flex flex-wrap items-start gap-4 text-sm">
-        {tipo !== "VALE" && (
+        {!ehValorFixo && (
           <div className="space-y-1">
             <label className="flex items-center gap-2 font-semibold">
               <input type="checkbox" checked={aplicarRet} onChange={(e) => setAplicarRet(e.target.checked)} />
@@ -153,9 +154,10 @@ export default function AprovacaoCard({
         <div className="ml-auto text-right">
           {Math.abs(bruto - medido) > 0.004 && <p className="text-xs text-ink-500">Lançado {brl(medido)}</p>}
           <p>Bruto aprovado <b>{brl(bruto)}</b></p>
-          {tipo !== "VALE" && <p className="text-xs">Retenção {brl(ret)} · Líquido <b>{brl(bruto - ret)}</b></p>}
+          {!ehValorFixo && <p className="text-xs">Retenção {brl(ret)} · Líquido <b>{brl(bruto - ret)}</b></p>}
           {tipo === "MEDICAO" && <p className="text-[11px] text-ink-400">Vales são descontados no fechamento do mês.</p>}
           {tipo === "VALE_MEDICAO" && <p className="text-[11px] text-ink-400">Pago na hora; não é descontado de novo no fechamento.</p>}
+          {tipo === "DESCONTO" && <p className="text-[11px] text-danger">Desconto/multa: será abatido do líquido no fechamento, como um vale.</p>}
         </div>
       </div>
 

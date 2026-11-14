@@ -129,23 +129,33 @@ export function BoletimContratoPdf({ b, engenheiroNome, dataGeracao }: { b: Bole
             )}
             {valesDesc.length > 0 && (
               <View wrap={false}>
-                <Text style={s.section}>Vales descontados nesta medição</Text>
+                <Text style={s.section}>Vales e descontos abatidos nesta medição</Text>
                 <View style={s.row}>
-                  <Text style={[s.th, { flex: 0.8 }]}>Vale</Text>
+                  <Text style={[s.th, { flex: 0.8 }]}>Nº</Text>
+                  <Text style={[s.th, { flex: 1.1 }]}>Tipo</Text>
                   <Text style={[s.th, { flex: 1 }]}>Data</Text>
-                  <Text style={[s.th, { flex: 1.2 }]}>Valor do vale</Text>
-                  <Text style={[s.th, { flex: 1.2 }]}>Descontado agora</Text>
-                  <Text style={[s.th, { flex: 1.2 }]}>Fica p/ próximo mês</Text>
+                  <Text style={[s.th, { flex: 1.1 }]}>Valor</Text>
+                  <Text style={[s.th, { flex: 1.1 }]}>Descontado agora</Text>
+                  <Text style={[s.th, { flex: 1.1 }]}>Fica p/ próximo mês</Text>
                 </View>
-                {valesDesc.map((v) => (
-                  <View style={s.row} key={v.vale_id}>
-                    <Text style={[s.td, { flex: 0.8, textAlign: "center" }]}>{v.numero}</Text>
-                    <Text style={[s.td, { flex: 1, textAlign: "center" }]}>{dataBR(v.data)}</Text>
-                    <Text style={[s.td, s.num, { flex: 1.2 }]}>{f2(v.valor_vale)}</Text>
-                    <Text style={[s.td, s.num, { flex: 1.2 }]}>{f2(v.descontar_agora)}</Text>
-                    <Text style={[s.td, s.num, { flex: 1.2 }]}>{v.restante_depois > 0 ? f2(v.restante_depois) : "-"}</Text>
-                  </View>
-                ))}
+                {valesDesc.map((v) => {
+                  const cor = v.tipo === "DESCONTO" ? { color: "#c0392b" } : undefined;
+                  return (
+                    <View key={v.vale_id}>
+                      <View style={s.row}>
+                        <Text style={[s.td, cor, { flex: 0.8, textAlign: "center" }]}>{v.numero}</Text>
+                        <Text style={[s.td, cor, { flex: 1.1 }]}>{v.tipo === "DESCONTO" ? "Desconto/multa" : "Vale"}</Text>
+                        <Text style={[s.td, cor, { flex: 1, textAlign: "center" }]}>{dataBR(v.data)}</Text>
+                        <Text style={[s.td, s.num, cor, { flex: 1.1 }]}>{f2(v.valor_vale)}</Text>
+                        <Text style={[s.td, s.num, cor, { flex: 1.1 }]}>{f2(v.descontar_agora)}</Text>
+                        <Text style={[s.td, s.num, cor, { flex: 1.1 }]}>{v.restante_depois > 0 ? f2(v.restante_depois) : "-"}</Text>
+                      </View>
+                      {v.tipo === "DESCONTO" && v.observacao && (
+                        <Text style={[s.td, cor, { fontSize: 7, paddingLeft: 4 }]}>Motivo: {v.observacao}</Text>
+                      )}
+                    </View>
+                  );
+                })}
                 <View style={s.row}>
                   <Text style={[s.tot, { flex: 3 }]}>TOTAL DE VALES DESCONTADOS</Text>
                   <Text style={[s.tot, s.num, { flex: 1.2 }]}>{f2(b.valesDescontados)}</Text>
