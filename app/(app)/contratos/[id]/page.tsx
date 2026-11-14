@@ -104,7 +104,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
           <Link href={`/contratos/medicoes?contrato=${c.id}`} className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-semibold hover:bg-primaryDark">Medir este contrato</Link>
           {ehAdmin && <Link href={`/contratos/fechamento?contrato=${c.id}`} className="border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">Boletim / fechamento</Link>}
           {ehAdmin && (precos ?? []).length > 0 && (
-            <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
+            <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} rel="noreferrer" className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
               <FileText className="w-4 h-4" /> Contrato tipo (PDF)
             </a>
           )}
@@ -134,7 +134,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
             {anexosContrato.map((a) => (
               <li key={a.id} className="py-2 flex flex-wrap items-center gap-3">
                 <FileText className="w-4 h-4 text-primary" />
-                <a href={links[a.storage_path]} target="_blank" rel="noreferrer" className="text-primary hover:underline flex-1 min-w-0 truncate">{a.nome_arquivo ?? "arquivo"}</a>
+                <a href={links[a.storage_path]} rel="noreferrer" className="text-primary hover:underline flex-1 min-w-0 truncate">{a.nome_arquivo ?? "arquivo"}</a>
                 <span className="text-xs text-ink-400">{dataHoraBR(a.criado_em)} · {nomes[a.enviado_por] ?? "—"}</span>
                 {ehAdmin && (
                   <FormAcao action={excluirAnexo} confirmar="Remover este arquivo?" mostrarOk={false}>
@@ -156,7 +156,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
         titulo="Preços unitários combinados"
         subtitulo="Valor por unidade de medida acertado com o fornecedor. É o que sai no PDF do contrato tipo."
         acoes={ehAdmin && (precos ?? []).length > 0 && (
-          <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:underline">
+          <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:underline">
             <FileText className="w-4 h-4" /> Gerar PDF do contrato tipo
           </a>
         )}
@@ -317,7 +317,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
                       <td className="py-2 pr-2 text-xs">{a.justificativa}</td>
                       <td className="py-2 pr-2">
                         {pdfs.map((x) => (
-                          <a key={x.id} href={links[x.storage_path]} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="w-3 h-3" />{x.nome_arquivo}</a>
+                          <a key={x.id} href={links[x.storage_path]} rel="noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="w-3 h-3" />{x.nome_arquivo}</a>
                         ))}
                         {ehAdmin && <UploadArquivo meta={{ contratoId: c.id, tipo: "ADITIVO", aditivoId: a.id }} label="PDF" accept="application/pdf,image/*" />}
                       </td>

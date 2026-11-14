@@ -166,7 +166,6 @@ export default async function FechamentoPage({
                   <div className="flex flex-wrap items-center gap-2">
                     <a
                       href={`/admin/fechamento/pdf?tipo=medicao&obraId=${obraSelecionada}&mes=${mes}`}
-                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2 text-sm"
                       title="Visualizar PDF antes de finalizar"
@@ -233,7 +232,6 @@ export default async function FechamentoPage({
                   <div className="flex flex-wrap items-center gap-2">
                     <a
                       href={`/admin/fechamento/pdf?tipo=vale&obraId=${obraSelecionada}&mes=${mes}`}
-                      target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2 text-sm"
                       title="Visualizar PDF antes de finalizar"
@@ -301,7 +299,6 @@ export default async function FechamentoPage({
                       {linksPdf[h.id] ? (
                         <a
                           href={linksPdf[h.id]}
-                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary underline text-xs"
                         >
