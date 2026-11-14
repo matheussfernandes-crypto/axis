@@ -5,6 +5,7 @@ import { brl, mesLabel, dataHoraBR } from "@/lib/contratos/util";
 import Selecao from "@/components/ui/Selecao";
 import TabelaFiltravel from "@/components/ui/TabelaFiltravel";
 import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 
 export default async function HistoricoContratosPage({
   searchParams,
@@ -89,9 +90,9 @@ export default async function HistoricoContratosPage({
                   <td className="py-2 pr-3 text-right font-semibold">{brl(f.valor_liquido)}</td>
                   <td className="py-2 pr-3 whitespace-nowrap text-xs text-ink-500">{dataHoraBR(f.fechado_em)}</td>
                   <td className="py-2 text-right">
-                    <a href={`/contratos/fechamento/pdf?contrato=${f.contrato_id}&mes=${f.mes_referencia}`} rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline">
+                    <VisualizadorPdf href={`/contratos/fechamento/pdf?contrato=${f.contrato_id}&mes=${f.mes_referencia}`} titulo="Boletim de medição" className="inline-flex items-center gap-1 text-xs text-primary font-semibold hover:underline">
                       <FileDown className="w-3.5 h-3.5" /> PDF
-                    </a>
+                    </VisualizadorPdf>
                   </td>
                 </tr>
               ),

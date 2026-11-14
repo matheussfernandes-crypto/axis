@@ -8,6 +8,7 @@ import { calcularMedicao, saldoDeVales } from "@/lib/fechamento/medicao";
 import Selecao from "@/components/ui/Selecao";
 import TabelaFiltravel from "@/components/ui/TabelaFiltravel";
 import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 
 function mesAtual() {
   return new Date().toISOString().slice(0, 7);
@@ -164,18 +165,17 @@ export default async function FechamentoPage({
                     </span>
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <a
+                    <VisualizadorPdf
                       href={`/admin/fechamento/pdf?tipo=medicao&obraId=${obraSelecionada}&mes=${mes}`}
-                      rel="noopener noreferrer"
+                      titulo="Boletim de medição"
                       className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2 text-sm"
-                      title="Visualizar PDF antes de finalizar"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                         <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                       Visualizar
-                    </a>
+                    </VisualizadorPdf>
                     <form action={finalizarFechamentoMedicao}>
                       <input type="hidden" name="obraId" value={obraSelecionada} />
                       <input type="hidden" name="mes" value={mes} />
@@ -230,18 +230,17 @@ export default async function FechamentoPage({
                     <span className="font-semibold">R$ {previaVale.somaGeral.toFixed(2)}</span>
                   </p>
                   <div className="flex flex-wrap items-center gap-2">
-                    <a
+                    <VisualizadorPdf
                       href={`/admin/fechamento/pdf?tipo=vale&obraId=${obraSelecionada}&mes=${mes}`}
-                      rel="noopener noreferrer"
+                      titulo="Boletim de vales"
                       className="inline-flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded px-3 py-2 text-sm"
-                      title="Visualizar PDF antes de finalizar"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
                         <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" />
                         <circle cx="12" cy="12" r="3" />
                       </svg>
                       Visualizar
-                    </a>
+                    </VisualizadorPdf>
                     <form action={finalizarFechamentoVale}>
                       <input type="hidden" name="obraId" value={obraSelecionada} />
                       <input type="hidden" name="mes" value={mes} />
@@ -297,13 +296,9 @@ export default async function FechamentoPage({
                     <td className="p-1">{h.email_enviado_para || "—"}</td>
                     <td className="p-1">
                       {linksPdf[h.id] ? (
-                        <a
-                          href={linksPdf[h.id]}
-                          rel="noopener noreferrer"
-                          className="text-primary underline text-xs"
-                        >
+                        <VisualizadorPdf href={linksPdf[h.id]} titulo="Boletim de fechamento" className="text-primary underline text-xs">
                           Baixar PDF
-                        </a>
+                        </VisualizadorPdf>
                       ) : (
                         <span className="text-xs text-gray-400">—</span>
                       )}

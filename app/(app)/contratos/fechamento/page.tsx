@@ -5,6 +5,7 @@ import { exigirPerfil } from "@/lib/contratos/server";
 import { calcularBoletim } from "@/lib/contratos/boletim";
 import { brl, num, pct, mesAtual, mesLabel, dataBR, dataHoraBR } from "@/lib/contratos/util";
 import FormAcao from "@/components/contratos/FormAcao";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 import { fecharMesContrato, reabrirMesContrato } from "../actions";
 import Selecao from "@/components/ui/Selecao";
 import { TabelaPaginada } from "@/components/ui/anima";
@@ -147,9 +148,9 @@ export default async function FechamentoContratosPage({
           </div>
 
           <div className="card flex flex-wrap items-center gap-3">
-            <a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${mes}`} rel="noreferrer" className="inline-flex items-center gap-2 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
+            <VisualizadorPdf href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${mes}`} titulo="Boletim de medição" className="inline-flex items-center gap-2 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
               <FileDown className="w-4 h-4" /> {b.fechamento ? "Boletim em PDF" : "Ver PDF antes de fechar"}
-            </a>
+            </VisualizadorPdf>
             {!b.fechamento ? (
               <FormAcao action={fecharMesContrato} reset={false} confirmar={`Fechar ${mesLabel(mes)}? Líquido a pagar ${brl(b.liquido)}. Depois de fechado, o mês fica travado para novos lançamentos.`} className="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="contratoId" value={contratoId} />
@@ -181,7 +182,7 @@ export default async function FechamentoContratosPage({
                       <td className="py-2 text-right">{brl(f.retencao_valor)}</td>
                       <td className="py-2 text-right">{brl(f.vales_descontados)}</td>
                       <td className="py-2 text-right font-semibold">{brl(f.valor_liquido)}</td>
-                      <td className="py-2 text-right"><a href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${f.mes_referencia}`} rel="noreferrer" className="text-xs text-primary underline">PDF</a></td>
+                      <td className="py-2 text-right"><VisualizadorPdf href={`/contratos/fechamento/pdf?contrato=${contratoId}&mes=${f.mes_referencia}`} titulo="Boletim de medição" className="text-xs text-primary underline">PDF</VisualizadorPdf></td>
                     </tr>
                   ))}
                 </TabelaPaginada>

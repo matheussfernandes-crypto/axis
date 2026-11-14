@@ -7,6 +7,7 @@ import { reabrirLancamentoContrato } from "../actions";
 import AprovacaoCard from "./AprovacaoCard";
 import SolicitacaoCard from "./SolicitacaoCard";
 import Selecao from "@/components/ui/Selecao";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 import FormFiltro from "@/components/ui/FormFiltro";
 import { TabelaPaginada } from "@/components/ui/anima";
 
@@ -139,13 +140,13 @@ export default async function AprovacoesContratosPage({
                 </span>
               </div>
               {l.tipo !== "VALE" && l.tipo !== "DESCONTO" && (
-                <a
+                <VisualizadorPdf
                   href={`/contratos/fechamento/pdf?contrato=${l.contrato_id}&mes=${l.mes_referencia}&previa=${l.id}`}
-                  rel="noreferrer"
+                  titulo="Prévia do boletim"
                   className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-primary/5"
                 >
                   <FileDown className="w-3.5 h-3.5" /> Ver PDF antes de aprovar
-                </a>
+                </VisualizadorPdf>
               )}
               {l.observacao && <p className="text-sm text-ink-700">Obs.: {l.observacao}</p>}
               {fotosL.length > 0 && (

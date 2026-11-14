@@ -18,6 +18,7 @@ import ItemEditor from "./ItemEditor";
 import ItemFormManual from "./ItemFormManual";
 import PrecosEditor from "./PrecosEditor";
 import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 import Selecao from "@/components/ui/Selecao";
 import { DataCampo } from "@/components/ui/anima";
 
@@ -104,9 +105,9 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
           <Link href={`/contratos/medicoes?contrato=${c.id}`} className="bg-primary text-white rounded-lg px-4 py-2 text-sm font-semibold hover:bg-primaryDark">Medir este contrato</Link>
           {ehAdmin && <Link href={`/contratos/fechamento?contrato=${c.id}`} className="border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">Boletim / fechamento</Link>}
           {ehAdmin && (precos ?? []).length > 0 && (
-            <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} rel="noreferrer" className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
+            <VisualizadorPdf href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} titulo="Contrato tipo" className="inline-flex items-center gap-1.5 border border-primary text-primary rounded-lg px-4 py-2 text-sm font-semibold">
               <FileText className="w-4 h-4" /> Contrato tipo (PDF)
-            </a>
+            </VisualizadorPdf>
           )}
         </div>
       </div>
@@ -134,7 +135,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
             {anexosContrato.map((a) => (
               <li key={a.id} className="py-2 flex flex-wrap items-center gap-3">
                 <FileText className="w-4 h-4 text-primary" />
-                <a href={links[a.storage_path]} rel="noreferrer" className="text-primary hover:underline flex-1 min-w-0 truncate">{a.nome_arquivo ?? "arquivo"}</a>
+                <VisualizadorPdf href={links[a.storage_path]} titulo={a.nome_arquivo ?? "arquivo"} className="text-primary hover:underline flex-1 min-w-0 truncate text-left">{a.nome_arquivo ?? "arquivo"}</VisualizadorPdf>
                 <span className="text-xs text-ink-400">{dataHoraBR(a.criado_em)} · {nomes[a.enviado_por] ?? "—"}</span>
                 {ehAdmin && (
                   <FormAcao action={excluirAnexo} confirmar="Remover este arquivo?" mostrarOk={false}>
@@ -156,9 +157,9 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
         titulo="Preços unitários combinados"
         subtitulo="Valor por unidade de medida acertado com o fornecedor. É o que sai no PDF do contrato tipo."
         acoes={ehAdmin && (precos ?? []).length > 0 && (
-          <a href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} rel="noreferrer" className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:underline">
+          <VisualizadorPdf href={`/contratos/contrato-tipo/pdf?contrato=${c.id}`} titulo="Contrato tipo" className="inline-flex items-center gap-1.5 text-sm text-primary font-semibold hover:underline">
             <FileText className="w-4 h-4" /> Gerar PDF do contrato tipo
-          </a>
+          </VisualizadorPdf>
         )}
       >
         {ehAdmin ? (
@@ -317,7 +318,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
                       <td className="py-2 pr-2 text-xs">{a.justificativa}</td>
                       <td className="py-2 pr-2">
                         {pdfs.map((x) => (
-                          <a key={x.id} href={links[x.storage_path]} rel="noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="w-3 h-3" />{x.nome_arquivo}</a>
+                          <VisualizadorPdf key={x.id} href={links[x.storage_path]} titulo={x.nome_arquivo} className="flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="w-3 h-3" />{x.nome_arquivo}</VisualizadorPdf>
                         ))}
                         {ehAdmin && <UploadArquivo meta={{ contratoId: c.id, tipo: "ADITIVO", aditivoId: a.id }} label="PDF" accept="application/pdf,image/*" />}
                       </td>
