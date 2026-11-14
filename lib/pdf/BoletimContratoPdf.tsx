@@ -139,7 +139,7 @@ export function BoletimContratoPdf({ b, engenheiroNome, dataGeracao }: { b: Bole
                   <Text style={[s.th, { flex: 1.1 }]}>Fica p/ próximo mês</Text>
                 </View>
                 {valesDesc.map((v) => {
-                  const cor = v.tipo === "DESCONTO" ? { color: "#c0392b" } : undefined;
+                  const cor = v.tipo === "DESCONTO" ? { color: "#c0392b" } : {};
                   return (
                     <View key={v.vale_id}>
                       <View style={s.row}>
