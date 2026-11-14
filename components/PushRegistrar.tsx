@@ -14,10 +14,22 @@ function urlBase64ToUint8Array(base64String: string) {
 async function registrarSubscription() {
   const reg = await navigator.serviceWorker.register("/sw.js");
   await navigator.serviceWorker.ready;
-  const sub = await reg.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-  });
+  let sub;
+  try {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  } catch {
+    // Já existe uma inscrição antiga (de uma chave VAPID anterior/diferente): remove e tenta de novo.
+    const antiga = await reg.pushManager.getSubscription();
+    if (!antiga) throw new Error("Falha ao criar inscrição de notificação.");
+    await antiga.unsubscribe();
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  }
   const json = sub.toJSON();
   await fetch("/api/push/subscribe", {
     method: "POST",
@@ -28,15 +40,21 @@ async function registrarSubscription() {
 
 export default function PushRegistrar() {
   const [mostrar, setMostrar] = useState(false);
-  const [status, setStatus] = useState<"idle" | "ok" | "negado">("idle");
+  const [status, setStatus] = useState<"idle" | "ok" | "negado" | "erro">("idle");
+  const [erro, setErro] = useState("");
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) return;
 
     const perm = Notification.permission;
     if (perm === "granted") {
-      // Já tem permissão — só registrar silenciosamente
-      registrarSubscription().catch(() => null);
+      // Já tem permissão — registra de novo (idempotente) a cada abertura do app,
+      // pra pegar uma chave VAPID nova caso a anterior tenha mudado.
+      registrarSubscription().catch((e) => {
+        setErro(String(e?.message ?? e));
+        setStatus("erro");
+        setMostrar(true);
+      });
       return;
     }
     if (perm === "denied") return; // usuário negou antes
@@ -86,6 +104,16 @@ export default function PushRegistrar() {
         <span>Notificações ativadas!</span>
       ) : status === "negado" ? (
         <span>Permissão negada.</span>
+      ) : status === "erro" ? (
+        <>
+          <span>Não consegui ativar as notificações: {erro}</span>
+          <button
+            onClick={() => setMostrar(false)}
+            style={{ background: "transparent", color: "#fff", border: "none", cursor: "pointer", fontSize: 18, lineHeight: 1, padding: 0 }}
+          >
+            ×
+          </button>
+        </>
       ) : (
         <>
           <span>Receber notificações do app?</span>
