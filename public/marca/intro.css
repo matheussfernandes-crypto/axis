@@ -1,0 +1,17 @@
+/* Abertura oficial (B · Cruzamento primeiro) — uma vez por sessão */
+#intro{position:fixed;inset:0;z-index:99999;background:#0B0B0B;display:flex;align-items:center;justify-content:center;transition:opacity .45s ease .05s}
+#intro svg{width:min(70vw,460px);height:auto}
+#intro text{font-family:'Space Grotesk',sans-serif}
+#intro .x1{transform:translate(-260px,0);opacity:0;animation:ax-entra .8s cubic-bezier(.2,.8,.2,1) .1s forwards}
+#intro .x2{transform:translate(260px,0);opacity:0;animation:ax-entra .8s cubic-bezier(.2,.8,.2,1) .25s forwards}
+#intro .lam{opacity:0;transform:translateY(40px);animation:ax-sobe .7s cubic-bezier(.2,.8,.2,1) 1s forwards}
+#intro .is{opacity:0;transform:translateY(40px);animation:ax-sobe .7s cubic-bezier(.2,.8,.2,1) 1.15s forwards}
+#intro .eixo{transform-box:fill-box;transform-origin:right center;transform:scaleX(0);animation:ax-esc .6s cubic-bezier(.65,0,.35,1) 1.7s forwards}
+#intro .tag{opacity:0;animation:ax-fade .8s ease 2.1s forwards}
+@keyframes ax-entra{to{opacity:1;transform:none}}
+@keyframes ax-sobe{to{opacity:1;transform:none}}
+@keyframes ax-esc{to{transform:scaleX(1)}}
+@keyframes ax-fade{to{opacity:1}}
+html.intro-saindo #intro{opacity:0;pointer-events:none}
+html.intro-done #intro{display:none}
+@media (prefers-reduced-motion:reduce){#intro{display:none}}

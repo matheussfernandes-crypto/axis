@@ -1,0 +1,77 @@
+"use client";
+
+import { useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Menu, Bell } from "lucide-react";
+import Sidebar from "./Sidebar";
+import Breadcrumbs from "./Breadcrumbs";
+import { sair } from "@/app/auth-actions";
+import { itemDeCaminho, permitido } from "@/lib/acessos/modulos";
+import SemAcesso from "./SemAcesso";
+
+import TemaAlternar from "./TemaAlternar";
+import NotificacoesPopover from "./NotificacoesPopover";
+export default function AppShell({
+  setor,
+  extras,
+  nome,
+  naoLidas,
+  contadores,
+  children,
+}: {
+  contadores?: Record<string, number>;
+  setor: string | null;
+  extras?: string[];
+  nome: string | null;
+  naoLidas: number;
+  children: React.ReactNode;
+}) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  // Módulo da página aberta: se a pessoa não tiver acesso, mostra a tela de pedido em vez do conteúdo
+  const pathname = usePathname();
+  const modulo = itemDeCaminho(pathname)?.key ?? null;
+  // ADM também segue as permissões por subitem; só o gestor (chave "gestor_acessos") vê tudo
+  const liberado = (extras ?? []).includes("gestor_acessos") || permitido(extras ?? [], pathname);
+
+  return (
+    <div className="min-h-screen lg:flex">
+      <Sidebar setor={setor} extras={extras} contadores={contadores} mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+
+      <div className="flex-1 min-w-0 flex flex-col min-h-screen">
+        <header className="print:hidden h-16 shrink-0 bg-white border-b border-border flex items-center justify-between gap-3 px-4 lg:px-6">
+          <div className="flex items-center gap-3 min-w-0">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="lg:hidden text-ink-700 hover:text-primary p-2 -ml-2"
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <Breadcrumbs />
+          </div>
+
+          <div className="flex items-center gap-4 text-sm shrink-0">
+            <NotificacoesPopover naoLidas={naoLidas} />
+
+            {nome && (
+              <Link href="/perfil" className="hidden sm:inline text-ink-700 hover:text-primary" title="Editar meu cadastro">
+                {nome}
+              </Link>
+            )}
+
+            <TemaAlternar />
+            <form action={sair}>
+              <button type="submit" className="text-ink-500 hover:text-danger">
+                Sair
+              </button>
+            </form>
+          </div>
+        </header>
+
+        <main className="flex-1 p-4 lg:p-8 space-y-4 print:p-0">{liberado ? children : <SemAcesso modulo={modulo!} />}</main>
+      </div>
+    </div>
+  );
+}

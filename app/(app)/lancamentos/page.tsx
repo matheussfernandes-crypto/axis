@@ -1,0 +1,155 @@
+import { getUsuarioAtual, perfilDaRequisicao } from "@/lib/auth/getCurrentUserProfile";
+import { createClient } from "@/lib/supabase/server";
+import {
+  criarLancamento,
+  aprovarLancamento,
+  rejeitarLancamento,
+  editarLancamento,
+  excluirLancamento,
+  excluirLancamentoProprio,
+  aprovarEmLote,
+  notificarEngenheiroConferir,
+  editarDataLancamento,
+} from "./actions";
+import NovoLancamentoForm from "./NovoLancamentoForm";
+import LancamentosTable from "./LancamentosTable";
+import Selecao from "@/components/ui/Selecao";
+import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+
+export default async function LancamentosPage({
+  searchParams,
+}: {
+  searchParams: { obra?: string; erro?: string };
+}) {
+  const supabase = createClient();
+  const user = await getUsuarioAtual();
+  const { data: meuPerfil } = await perfilDaRequisicao(user!.id);
+  const ehAdmin = meuPerfil?.setor === "ADMIN";
+
+  const { data: obras } = await supabase.from("obras_visibilidade").select("id, nome").eq("operacional", true).order("nome");
+  const obraId = searchParams.obra || obras?.[0]?.id || null;
+  const obraNome = obras?.find((o) => o.id === obraId)?.nome ?? "";
+
+  const vazio = Promise.resolve({ data: [] as any[] });
+  const [
+    { data: pessoas },
+    { data: todasPessoasObra },
+    { data: contratosAtivos },
+    { data: servicos },
+    { data: lancamentos },
+    { data: fechamentosObra },
+  ] = await Promise.all([
+    obraId
+      ? supabase.from("pessoas").select("id, nome").eq("obra_id", obraId).eq("status", "ATIVO").eq("papel", "EMPREITEIRO").order("nome")
+      : vazio,
+    obraId ? supabase.from("pessoas").select("id, nome").eq("obra_id", obraId) : vazio,
+    // Contratos de empresas terceirizadas com status ATIVO para esta obra
+    obraId
+      ? supabase
+          .from("empresa_obra")
+          .select("id, tipo_servico, retencao_pct, retencao_contratual, empresas_terceirizadas(nome)")
+          .eq("obra_id", obraId)
+          .eq("status", "ATIVO")
+          .order("criado_em")
+      : vazio,
+    obraId ? supabase.from("servicos").select("id, nome, tipo, valor_unitario").eq("obra_id", obraId).order("criado_em") : vazio,
+    obraId
+      ? supabase
+          .from("lancamentos")
+          .select(
+            "id, tipo, data, mes_referencia, pessoa_id, servico, local, detalhe_texto, total_reais, valor_vale_hibrido, retencao_pct_usado, status, vale_real, observacao_medicao, quantidade, criado_por, motivo_rejeicao"
+          )
+          .eq("obra_id", obraId)
+          .order("criado_em", { ascending: false })
+          .limit(50)
+      : vazio,
+    obraId ? supabase.from("fechamentos").select("tipo, mes_referencia").eq("obra_id", obraId) : vazio,
+  ]);
+
+  const empresasContrato = (contratosAtivos ?? []).map((c: any) => ({
+    id: c.id,
+    empresa_nome: (c.empresas_terceirizadas as any)?.nome ?? "—",
+    tipo_servico: c.tipo_servico,
+    retencao_pct: Number(c.retencao_pct),
+    retencao_contratual: c.retencao_contratual,
+  }));
+
+  const nomesPessoas: Record<string, string> = {};
+  for (const p of todasPessoasObra ?? []) nomesPessoas[p.id] = p.nome;
+
+  const idsCriadores = Array.from(new Set((lancamentos ?? []).map((l) => l.criado_por).filter(Boolean)));
+  const nomesCriadores: Record<string, string> = {};
+  if (idsCriadores.length > 0) {
+    const { data: perfisCriadores } = await supabase
+      .from("perfis")
+      .select("id, nome_completo")
+      .in("id", idsCriadores as string[]);
+    for (const p of perfisCriadores ?? []) nomesCriadores[p.id] = p.nome_completo;
+  }
+
+  const mesesFechadosArr = (fechamentosObra ?? []).map((f) => `${f.tipo}-${f.mes_referencia}`);
+
+  return (
+    <div className="space-y-5">
+        <h1 className="text-xl font-semibold text-primaryDark">Lançamentos — Medição &amp; Vale</h1>
+
+        <div className="card">
+          <form method="get" className="flex gap-2">
+            <Selecao name="obra" defaultValue={obraId ?? ""} className="border rounded px-3 py-2 flex-1">
+              {(obras ?? []).map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
+            </Selecao>
+            <button className="bg-gray-200 rounded px-4 py-2">Ver obra</button>
+          </form>
+        </div>
+
+        {obraId && (
+          <SecaoRecolhivel chave="lancamentos-novo" titulo="Novo lançamento">
+            {pessoas && pessoas.length > 0 ? (
+              <NovoLancamentoForm
+                obraId={obraId}
+                pessoas={pessoas}
+                servicos={servicos ?? []}
+                empresasContrato={empresasContrato}
+                criarLancamento={criarLancamento}
+              />
+            ) : (
+              <p className="text-sm text-gray-400">Nenhuma pessoa ativa nesta obra. Cadastre em RH &amp; Pessoas.</p>
+            )}
+          </SecaoRecolhivel>
+        )}
+
+        {searchParams.erro && (
+          <div className="card bg-red-50 border border-red-200 text-red-700 text-sm">
+            {searchParams.erro}
+          </div>
+        )}
+
+        {obraId && (
+          <SecaoRecolhivel chave="lancamentos-historico" titulo="Histórico de lançamentos">
+            {lancamentos && lancamentos.length > 0 ? (
+              <LancamentosTable
+                lancamentos={lancamentos as any}
+                obraId={obraId}
+                obraNome={obraNome}
+                nomesPessoas={nomesPessoas}
+                nomesCriadores={nomesCriadores}
+                pessoas={pessoas ?? []}
+                servicos={servicos ?? []}
+                ehAdmin={ehAdmin}
+                meuUserId={user!.id}
+                mesesFechados={new Set(mesesFechadosArr)}
+                aprovarLancamento={aprovarLancamento}
+                rejeitarLancamento={rejeitarLancamento}
+                editarLancamento={editarLancamento}
+                excluirLancamento={excluirLancamento}
+                excluirLancamentoProprio={excluirLancamentoProprio}
+                editarDataLancamento={editarDataLancamento}
+              />
+            ) : (
+              <p className="text-sm text-gray-400">Nenhum lançamento encontrado para esta obra.</p>
+            )}
+          </SecaoRecolhivel>
+        )}
+    </div>
+  );
+}

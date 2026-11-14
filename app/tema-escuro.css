@@ -1,0 +1,95 @@
+/* Modo escuro do site inteiro: vale quando <html> tem a classe "dark" (ver lib/tema.ts).
+   As classes do Tailwind ficam como estão; aqui só trocamos as cores quando o escuro está ligado. */
+
+html.dark { color-scheme: dark; }
+html.dark body { background: #0f0f0f; color: #ededed; }
+html.dark *, html.dark *::before, html.dark *::after { border-color: #2c2c2c; }
+
+/* superfícies */
+html.dark .bg-white,
+html.dark .card,
+html.dark .card-table,
+html.dark .card-flush,
+html.dark .stat-tile { background-color: #161616; }
+html.dark .bg-surface-subtle,
+html.dark .bg-surface\/50 { background-color: #1e1e1e; }
+html.dark .hover\:bg-surface-subtle:hover,
+html.dark .hover\:bg-white:hover { background-color: #1e1e1e; }
+
+/* textos */
+html.dark .text-ink-900 { color: #ededed; }
+html.dark .text-ink-700 { color: #d4d4d4; }
+html.dark .text-ink-500 { color: #9a9a9a; }
+html.dark .text-ink-400 { color: #8a8a8a; }
+html.dark .text-ink-300 { color: #666666; }
+html.dark .text-primaryDark { color: #e6e6e6; }
+html.dark .text-primary { color: #cfcfcf; }
+html.dark .stat-tile .stat-value { color: #e6e6e6; }
+html.dark table th { color: #9a9a9a; }
+html.dark .badge-pendente { background: #352813; color: #e3a44a; }
+html.dark .badge-aprovado { background: #173023; color: #62c48d; }
+html.dark .badge-rejeitado { background: #3a1a18; color: #f2766d; }
+html.dark .badge-desativado { background: #262629; color: #aeaeb8; }
+
+/* campos de formulário */
+html.dark input:not([type="checkbox"]):not([type="radio"]),
+html.dark select,
+html.dark textarea { background-color: #0f0f0f; color: #ededed; border-color: #2c2c2c; }
+html.dark input::placeholder, html.dark textarea::placeholder { color: #7a7a7a; }
+
+/* cobertura enquanto o módulo embutido monta */
+.cobertura-modulo { background: #f4f4f4; }
+html.dark .cobertura-modulo { background: #0f0f0f; }
+
+html.dark .registro-rapido input:not([type="checkbox"]):not([type="radio"]) { background-color: transparent; border: 0; }
+
+/* tons claros do Tailwind usados em avisos e botões */
+html.dark .bg-red-50 { background-color: #2a1715; }
+html.dark .border-red-200 { border-color: #5a2a26; }
+html.dark .text-red-600, html.dark .text-red-700 { color: #f2766d; }
+html.dark .bg-green-100 { background-color: #173023; }
+html.dark .text-green-800 { color: #62c48d; }
+html.dark .bg-red-100 { background-color: #3a1a18; }
+html.dark .bg-amber-50, html.dark .bg-yellow-50 { background-color: #2e2814; }
+html.dark .border-amber-200, html.dark .border-yellow-200 { border-color: #5c4a17; }
+html.dark .text-amber-700, html.dark .text-amber-800 { color: #e3a44a; }
+html.dark .bg-gray-100, html.dark .bg-slate-100 { background-color: #1e1e1e; }
+html.dark .bg-gray-300, html.dark .bg-slate-300 { background-color: #3a4c51; }
+html.dark .text-slate-600, html.dark .text-gray-600 { color: #d4d4d4; }
+html.dark .border-gray-400 { border-color: #4f6368; }
+html.dark .bg-white\/90 { background-color: rgba(21,32,35,.9); }
+html.dark .bg-white\/60, html.dark .hover\:bg-white\/60:hover { background-color: rgba(29,43,47,.7); }
+html.dark .text-ink-800 { color: #dcdcdc; }
+html.dark .text-ink-600 { color: #b5b5b5; }
+html.dark .bg-primary\/5 { background-color: rgba(220,220,220,.08); }
+html.dark .bg-primary\/10 { background-color: rgba(220,220,220,.12); }
+html.dark .bg-primary\/15 { background-color: rgba(220,220,220,.16); }
+html.dark .border-primary { border-color: #3fa9b9; }
+
+/* linhas divisórias (divide-y) também no tom escuro */
+html.dark [class*="divide-"] > :not([hidden]) ~ :not([hidden]) { border-color: #2c2c2c; }
+
+/* ---- telas antigas (Lançamentos, Contratos, Financeiro, Admin, RH) que usam cinzas e cores do Tailwind ---- */
+html.dark .text-gray-300 { color: #666666; }
+html.dark .text-gray-400 { color: #8a8a8a; }
+html.dark .text-gray-500 { color: #9a9a9a; }
+html.dark .text-gray-600 { color: #b5b5b5; }
+html.dark .text-gray-700, html.dark .text-gray-800, html.dark .text-gray-900 { color: #dcdcdc; }
+html.dark .hover\:text-gray-700:hover { color: #ededed; }
+html.dark .bg-gray-50, html.dark .hover\:bg-gray-50:hover, html.dark .odd\:bg-gray-50:nth-child(odd) { background-color: #1b1b1b; }
+html.dark .bg-gray-100, html.dark .disabled\:bg-gray-100:disabled { background-color: #1e1e1e; }
+html.dark .bg-gray-200, html.dark .hover\:bg-gray-200:hover { background-color: #263539; color: #ededed; }
+html.dark .border-gray-300, html.dark .border-gray-200 { border-color: #2c2c2c; }
+html.dark .bg-green-50 { background-color: #13261c; }
+html.dark .border-green-200 { border-color: #24563a; }
+html.dark .text-green-600, html.dark .text-green-700 { color: #62c48d; }
+html.dark .text-red-500 { color: #f2766d; }
+html.dark .text-red-700, html.dark .text-red-600 { color: #f2766d; }
+html.dark .bg-amber-100, html.dark .bg-yellow-100 { background-color: #352813; }
+html.dark .text-amber-800 { color: #e8b565; }
+html.dark .bg-blue-100 { background-color: #14283a; }
+html.dark .text-blue-700 { color: #7fb8ea; }
+html.dark tr.bg-gray-50, html.dark .even\:bg-gray-50:nth-child(even) { background-color: #1b1b1b; }
+html.dark .shadow, html.dark .shadow-sm, html.dark .shadow-md { --tw-shadow-color: rgba(0,0,0,.5); }
+/* campos antigos (border + rounded) */
+html.dark input[type="date"], html.dark input[type="month"] { color-scheme: dark; }

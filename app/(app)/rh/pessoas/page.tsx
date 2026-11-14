@@ -1,0 +1,133 @@
+import { getUsuarioAtual, perfilDaRequisicao } from "@/lib/auth/getCurrentUserProfile";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { criarPessoa, transferirObra, darBaixa, reativarPessoa, excluirPessoa, editarPessoa } from "./actions";
+import PessoaLinha from "./PessoaLinha";
+import Selecao from "@/components/ui/Selecao";
+import { DataCampo } from "@/components/ui/anima";
+import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+import TabelaFiltravel from "@/components/ui/TabelaFiltravel";
+
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const ROTULO_PAPEL: Record<string, string> = { EMPREITEIRO: "Empreiteiro", MESTRE: "Mestre", MESTRE_GERAL: "Mestre Geral", CONTRAMESTRE: "Contramestre" };
+
+function diffTempo(inicioISO: string, fimISO: string) {
+  const ini = new Date(inicioISO);
+  const fim = new Date(fimISO);
+  let meses = (fim.getFullYear() - ini.getFullYear()) * 12 + (fim.getMonth() - ini.getMonth());
+  if (fim.getDate() < ini.getDate()) meses -= 1;
+  if (meses < 0) meses = 0;
+  const anos = Math.floor(meses / 12);
+  const restoMeses = meses % 12;
+  if (anos === 0) return `${restoMeses} mês(es)`;
+  return `${anos} ano(s) e ${restoMeses} mês(es)`;
+}
+
+export default async function PessoasPage({
+  searchParams,
+}: {
+  searchParams: { erro?: string; sucesso?: string };
+}) {
+  const supabase = createClient();
+  const user = await getUsuarioAtual();
+  const { data: meuPerfil } = await perfilDaRequisicao(user!.id);
+  if (meuPerfil?.setor !== "RH" && meuPerfil?.setor !== "ADMIN") redirect("/dashboard");
+
+  const souAdmin = meuPerfil?.setor === "ADMIN";
+
+  const { data: obras } = await supabase.from("obras_visibilidade").select("id, nome").eq("operacional", true).order("nome");
+  const { data: pessoas } = await supabase
+    .from("pessoas")
+    .select("id, nome, papel, obra_id, admissao, status, saida")
+    .order("nome");
+
+  const nomeObra: Record<string, string> = {};
+  for (const o of obras ?? []) nomeObra[o.id] = o.nome;
+
+  const hoje = hojeISO();
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold text-primaryDark">RH &amp; Pessoas</h1>
+
+      {searchParams.erro && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl p-3">{searchParams.erro}</div>
+      )}
+      {searchParams.sucesso && (
+        <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl p-3">{searchParams.sucesso}</div>
+      )}
+
+      <SecaoRecolhivel chave="rh-cadastro" titulo="Cadastrar novo empreiteiro">
+        {obras && obras.length > 0 ? (
+          <form action={criarPessoa} className="flex flex-wrap gap-2">
+            <input name="nome" placeholder="Nome da pessoa" className="border rounded px-2 py-1 flex-1 min-w-[160px]" required />
+            <Selecao name="papel" className="border rounded px-2 py-1">
+              <option value="EMPREITEIRO">Empreiteiro</option>
+              <option value="MESTRE">Mestre</option>
+              <option value="MESTRE_GERAL">Mestre Geral</option>
+              <option value="CONTRAMESTRE">Contramestre</option>
+            </Selecao>
+            <Selecao name="obraId" className="border rounded px-2 py-1">
+              {obras.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
+            </Selecao>
+            <DataCampo name="admissao" defaultValue={hoje} />
+            <input name="retencao" type="number" min={0} max={100} placeholder="% retenção inicial" className="border rounded px-2 py-1 w-40" />
+            <button className="bg-primary text-white rounded px-3 py-1">Cadastrar</button>
+          </form>
+        ) : (
+          <p className="text-sm text-gray-400">Cadastre uma obra primeiro em Obras &amp; Pessoas.</p>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          O Mestre de uma obra é quem assina &quot;Conferido por&quot; nas folhas de medição/vale daquela obra.
+        </p>
+      </SecaoRecolhivel>
+
+      <SecaoRecolhivel chave="rh-resumo" titulo="Resumo de pessoas — situação e tempo na empresa">
+        {pessoas && pessoas.length > 0 ? (
+          <TabelaFiltravel
+            por={25}
+            className="w-full text-sm"
+            filtros={[
+              { tipo: "busca", chaves: ["nome"], rotulo: "Pessoa", placeholder: "Digite o nome…" },
+              { tipo: "selecao", chave: "obra", rotulo: "Obra" },
+              { tipo: "selecao", chave: "papel", rotulo: "Papel" },
+              { tipo: "selecao", chave: "status", rotulo: "Status" },
+            ]}
+            cabecalho={
+<thead className="text-left text-gray-400">
+              <tr>
+                <th className="p-1">Nome</th><th className="p-1">Papel</th><th className="p-1">Obra</th>
+                <th className="p-1">Admissão</th><th className="p-1">Tempo</th><th className="p-1">Status</th><th className="p-1">Ações</th>
+              </tr>
+            </thead>
+}
+            itens={pessoas.map((p) => {
+                const fim = p.status === "ATIVO" ? hoje : (p.saida || hoje);
+                return { id: p.id, d: { nome: p.nome, obra: nomeObra[p.obra_id] ?? "—", papel: ROTULO_PAPEL[p.papel] ?? "Empreiteiro", status: p.status === "ATIVO" ? "Ativo" : "Inativo" }, linha: (
+                  <PessoaLinha
+                    key={p.id}
+                    p={p as any}
+                    obras={obras ?? []}
+                    nomeObra={nomeObra[p.obra_id] ?? "—"}
+                    tempoTexto={`${diffTempo(p.admissao, fim)}${p.status !== "ATIVO" ? " (até a saída)" : ""}`}
+                    souAdmin={souAdmin}
+                    transferirObra={transferirObra}
+                    darBaixa={darBaixa}
+                    reativarPessoa={reativarPessoa}
+                    excluirPessoa={excluirPessoa}
+                    editarPessoa={editarPessoa}
+                    hoje={hoje}
+                  />
+                ) };
+              })}
+          />
+        ) : (
+          <p className="text-sm text-gray-400">Nenhum empreiteiro cadastrado ainda.</p>
+        )}
+      </SecaoRecolhivel>
+    </div>
+  );
+}

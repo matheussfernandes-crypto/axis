@@ -1,0 +1,187 @@
+import { getUsuarioAtual, perfilDaRequisicao } from "@/lib/auth/getCurrentUserProfile";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { salvarSaldoInicial, lancarRetirada, excluirRetirada } from "./actions";
+import Selecao from "@/components/ui/Selecao";
+import { DataCampo } from "@/components/ui/anima";
+import TabelaFiltravel from "@/components/ui/TabelaFiltravel";
+import PainelCadastro from "@/components/ui/PainelCadastro";
+import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
+
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export default async function RetiradasPage() {
+  const supabase = createClient();
+  const user = await getUsuarioAtual();
+  const { data: meuPerfil } = await perfilDaRequisicao(user!.id);
+  if (meuPerfil?.setor !== "FINANCEIRO" && meuPerfil?.setor !== "ADMIN") redirect("/dashboard");
+
+  const { data: obras } = await supabase.from("obras").select("id, nome");
+  const { data: pessoas } = await supabase
+    .from("pessoas")
+    .select("id, nome, obra_id, admissao, papel, saldo_inicial_retido")
+    .not("papel", "in", "(MESTRE,MESTRE_GERAL)")
+    .order("nome");
+
+  // Lançamentos "Vale + Medição" também somam aqui pela parte da Medição Complementar
+  // (total_reais), com a mesma fórmula de retenção de qualquer medição aprovada.
+  const { data: medicoesAprovadas } = await supabase
+    .from("lancamentos")
+    .select("pessoa_id, total_reais, retencao_pct_usado")
+    .in("tipo", ["MEDICAO", "VALE_MEDICAO"])
+    .eq("status", "APROVADO");
+
+  const { data: retiradas } = await supabase
+    .from("retiradas_retido")
+    .select("id, pessoa_id, obra_id, valor, data, observacao, lancado_por")
+    .order("data", { ascending: false });
+
+  const nomeObra: Record<string, string> = {};
+  for (const o of obras ?? []) nomeObra[o.id] = o.nome;
+
+  const nomePessoa: Record<string, string> = {};
+  for (const p of pessoas ?? []) nomePessoa[p.id] = p.nome;
+
+  const retidoCalculado: Record<string, number> = {};
+  for (const l of medicoesAprovadas ?? []) {
+    const pct = l.retencao_pct_usado != null ? Number(l.retencao_pct_usado) : 0;
+    retidoCalculado[l.pessoa_id] = (retidoCalculado[l.pessoa_id] ?? 0) + Number(l.total_reais) * pct;
+  }
+
+  const retiradoPorPessoa: Record<string, number> = {};
+  for (const r of retiradas ?? []) {
+    retiradoPorPessoa[r.pessoa_id] = (retiradoPorPessoa[r.pessoa_id] ?? 0) + Number(r.valor);
+  }
+
+  function totalRetido(pessoaId: string, saldoInicial: number) {
+    return saldoInicial + (retidoCalculado[pessoaId] ?? 0);
+  }
+  function totalRetirado(pessoaId: string) {
+    return retiradoPorPessoa[pessoaId] ?? 0;
+  }
+  function saldoDisponivel(pessoaId: string, saldoInicial: number) {
+    const saldo = totalRetido(pessoaId, saldoInicial) - totalRetirado(pessoaId);
+    return Math.abs(saldo) < 0.005 ? 0 : saldo;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+      <h1 className="text-xl font-semibold text-primaryDark">Financeiro — Retiradas de retido</h1>
+      <a href="/financeiro/extrato-retidos" className="bg-primary text-white rounded px-4 py-2 text-sm font-medium hover:bg-primaryDark transition">Extrato de Retidos</a>
+      </div>
+
+      <PainelCadastro titulo="Lançar retirada de valor retido" rotuloBotao="Nova retirada">
+        <p className="text-xs text-gray-400 mb-3">
+          Use quando um empreiteiro solicita receber, antes da hora, uma parte do que está retido com ele. O valor lançado aqui é abatido do saldo disponível dessa pessoa.
+        </p>
+        {pessoas && pessoas.length > 0 ? (
+          <form action={lancarRetirada} className="flex flex-wrap gap-2">
+            <Selecao name="pessoaId" className="border rounded px-2 py-1 flex-1 min-w-[160px]" required>
+              {pessoas.map((p) => (
+                <option key={p.id} value={p.id}>{p.nome} — {nomeObra[p.obra_id] ?? "?"}</option>
+              ))}
+            </Selecao>
+            <DataCampo name="data" defaultValue={hojeISO()} />
+            <input type="number" step="0.01" name="valor" placeholder="Valor (R$)" className="border rounded px-2 py-1 w-32" required />
+            <input name="observacao" placeholder="Observação (opcional)" className="border rounded px-2 py-1 flex-1 min-w-[160px]" />
+            <button className="bg-primary text-white rounded px-4 py-2">Lançar retirada</button>
+          </form>
+        ) : (
+          <p className="text-sm text-gray-400">Nenhum empreiteiro cadastrado ainda.</p>
+        )}
+      </PainelCadastro>
+
+      <SecaoRecolhivel chave="ret-saldo" titulo="Saldo de retenção por pessoa" subtitulo="Total retido (saldo inicial + medições aprovadas) menos o que já foi retirado — é o que ainda está disponível.">
+        {pessoas && pessoas.length > 0 ? (
+          <TabelaFiltravel
+            por={25}
+            className="w-full text-sm"
+            filtros={[
+              { tipo: "selecao", chave: "pessoa", rotulo: "Pessoa", todas: "Todas as pessoas" },
+              { tipo: "selecao", chave: "obra", rotulo: "Obra", todas: "Todas as obras" },
+            ]}
+            cabecalho={
+<thead className="text-left text-gray-400">
+              <tr>
+                <th className="p-1">Pessoa</th><th className="p-1">Obra</th><th className="p-1">Saldo inicial</th>
+                <th className="p-1">Total retido</th><th className="p-1">Total retirado</th><th className="p-1">Saldo disponível</th>
+              </tr>
+            </thead>
+}
+            itens={pessoas.map((p) => {
+                const inicial = Number(p.saldo_inicial_retido ?? 0);
+                return { id: p.id, d: { pessoa: p.nome, obra: nomeObra[p.obra_id] ?? "—" }, linha: (
+                  <tr key={p.id} className="border-t">
+                    <td className="p-1">{p.nome}</td>
+                    <td className="p-1">{nomeObra[p.obra_id] ?? "—"}</td>
+                    <td className="p-1">
+                      <form action={salvarSaldoInicial} className="flex items-center gap-1">
+                        <input type="hidden" name="pessoaId" value={p.id} />
+                        <span className="text-gray-400">R$</span>
+                        <input type="number" step="0.01" name="saldoInicial" defaultValue={inicial} className="border rounded px-2 py-1 w-24" />
+                        <button className="bg-gray-200 rounded px-2 py-1 text-xs">Salvar</button>
+                      </form>
+                    </td>
+                    <td className="p-1">R$ {totalRetido(p.id, inicial).toFixed(2)}</td>
+                    <td className="p-1">R$ {totalRetirado(p.id).toFixed(2)}</td>
+                    <td className="p-1 font-semibold">R$ {saldoDisponivel(p.id, inicial).toFixed(2)}</td>
+                  </tr>
+                ) };
+              })}
+          />
+        ) : (
+          <p className="text-sm text-gray-400">Nenhuma pessoa cadastrada ainda.</p>
+        )}
+        <p className="text-xs text-gray-400 mt-2">
+          Use &quot;Saldo inicial&quot; para lançar quanto a pessoa já tinha de retido antes de começar a usar o sistema.
+        </p>
+      </SecaoRecolhivel>
+
+      <SecaoRecolhivel chave="ret-lancadas" titulo="Retiradas já lançadas">
+        {retiradas && retiradas.length > 0 ? (
+          <TabelaFiltravel
+            por={20}
+            className="w-full text-sm"
+            filtros={[
+              { tipo: "selecao", chave: "pessoa", rotulo: "Pessoa", todas: "Todas as pessoas" },
+              { tipo: "selecao", chave: "obra", rotulo: "Obra", todas: "Todas as obras" },
+              { tipo: "periodo", chave: "data", rotulo: "Data" },
+            ]}
+            cabecalho={
+<thead className="text-left text-gray-400">
+              <tr>
+                <th className="p-1">Data</th><th className="p-1">Pessoa</th><th className="p-1">Obra</th>
+                <th className="p-1">Valor</th><th className="p-1">Observação</th><th className="p-1">Ações</th>
+              </tr>
+            </thead>
+}
+            itens={retiradas.map((r) => ({
+              id: String(r.id),
+              d: { pessoa: nomePessoa[r.pessoa_id] ?? "—", obra: r.obra_id ? (nomeObra[r.obra_id] ?? "—") : "—", data: String(r.data ?? "").slice(0, 10) },
+              linha: (
+                <tr key={r.id} className="border-t">
+                  <td className="p-1">{new Date(r.data).toLocaleDateString("pt-BR")}</td>
+                  <td className="p-1">{nomePessoa[r.pessoa_id] ?? "—"}</td>
+                  <td className="p-1">{r.obra_id ? (nomeObra[r.obra_id] ?? "—") : "—"}</td>
+                  <td className="p-1">R$ {Number(r.valor).toFixed(2)}</td>
+                  <td className="p-1">{r.observacao || "—"}</td>
+                  <td className="p-1">
+                    <form action={excluirRetirada}>
+                      <input type="hidden" name="id" value={r.id} />
+                      <button className="bg-red-100 text-red-700 rounded px-2 py-0.5 text-xs">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              ),
+            }))}
+          />
+        ) : (
+          <p className="text-sm text-gray-400">Nenhuma retirada de retido lançada ainda.</p>
+        )}
+      </SecaoRecolhivel>
+    </div>
+  );
+}
