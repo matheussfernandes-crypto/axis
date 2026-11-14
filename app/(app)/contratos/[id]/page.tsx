@@ -15,6 +15,7 @@ import {
 } from "../actions";
 import AditivoForm from "./AditivoForm";
 import ItemEditor from "./ItemEditor";
+import ItemFormManual from "./ItemFormManual";
 import PrecosEditor from "./PrecosEditor";
 import SecaoRecolhivel from "@/components/contratos/SecaoRecolhivel";
 import Selecao from "@/components/ui/Selecao";
@@ -280,19 +281,7 @@ export default async function ContratoDetalhePage({ params }: { params: { id: st
 
         {ehAdmin && (
           <div className="grid lg:grid-cols-2 gap-4 pt-2 border-t">
-            <FormAcao action={adicionarItens} className="grid grid-cols-6 gap-2 text-xs items-end">
-              <input type="hidden" name="contratoId" value={c.id} />
-              <p className="col-span-6 font-semibold text-ink-700 text-sm">Adicionar item</p>
-              <label className="col-span-1 flex flex-col gap-1">Código<input name="codigo" placeholder="1.1" className="border rounded px-2 py-1.5" /></label>
-              <label className="col-span-5 flex flex-col gap-1">Descrição *<input name="descricao" required placeholder="Assentamento de porcelanato" className="border rounded px-2 py-1.5" /></label>
-              <label className="col-span-2 flex flex-col gap-1">Unidade
-                <input name="unidade" list="unidades" defaultValue="m²" className="border rounded px-2 py-1.5" />
-              </label>
-              <label className="col-span-2 flex flex-col gap-1">Quantidade<input name="quantidade" inputMode="decimal" required className="border rounded px-2 py-1.5" /></label>
-              <label className="col-span-2 flex flex-col gap-1">Valor unit. (R$)<input name="valorUnitario" inputMode="decimal" required className="border rounded px-2 py-1.5" /></label>
-              <button className="col-span-6 bg-primary text-white rounded px-3 py-2 font-semibold">Adicionar</button>
-              <datalist id="unidades">{UNIDADES.map((u) => <option key={u} value={u} />)}</datalist>
-            </FormAcao>
+            <ItemFormManual contratoId={c.id} precos={(precos ?? []).map((p) => ({ id: p.id, servico: p.servico, unidade: p.unidade, valor_unitario: Number(p.valor_unitario) }))} />
             <FormAcao action={adicionarItens} className="flex flex-col gap-2 text-xs">
               <input type="hidden" name="contratoId" value={c.id} />
               <p className="font-semibold text-ink-700 text-sm">Colar planilha do Excel</p>
