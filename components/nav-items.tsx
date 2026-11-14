@@ -101,7 +101,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Cadastrar e gerenciar empresas de serviços terceirizados.",
     allowedSetores: ["ADMIN"],
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Cadastros",
   },
   {
     label: "Contratos",
@@ -110,7 +110,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Contratos de todas as obras: itens, aditivos, retenção e saldo.",
     allowedSetores: ["ADMIN", "ENGENHEIRO", "ESTAGIARIO", "FINANCEIRO"],
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Cadastros",
   },
   {
     label: "Medições",
@@ -119,7 +119,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Medir um contrato já cadastrado (medições, vales e vales de medição).",
     allowedSetores: ["ADMIN", "ENGENHEIRO", "ESTAGIARIO"],
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Execução",
   },
   {
     label: "Autorização",
@@ -129,7 +129,7 @@ export const NAV_ITEMS: NavItem[] = [
     allowedSetores: ["ADMIN"],
     badgeKey: "contratosPendentes",
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Execução",
   },
   {
     label: "Fechamento",
@@ -138,7 +138,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Fechar o mês do contrato e gerar o PDF da medição aprovada.",
     allowedSetores: ["ADMIN"],
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Execução",
   },
   {
     label: "Histórico",
@@ -147,7 +147,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "PDFs das medições já fechadas, de todos os contratos.",
     allowedSetores: ["ADMIN", "FINANCEIRO"],
     secao: "contratos",
-    grupo: "Contratos",
+    grupo: "Execução",
   },
 
   // ---- Administração de acessos (só o gestor, pela permissão "gestor_acessos") ----
@@ -159,7 +159,7 @@ export const NAV_ITEMS: NavItem[] = [
     allowedSetores: [],
     extra: "gestor_acessos",
     secao: "admin",
-    grupo: "Administração",
+    grupo: "Acessos e permissões",
   },
 
   // ---- Financeiro ----
@@ -226,7 +226,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Aprovar ou rejeitar cadastros pendentes.",
     allowedSetores: ["ADMIN"],
     secao: "admin",
-    grupo: "Acesso e auditoria",
+    grupo: "Acessos e permissões",
   },
   {
     label: "Log de auditoria",
@@ -235,7 +235,7 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Histórico de quem criou, editou ou excluiu lançamentos.",
     allowedSetores: ["ADMIN"],
     secao: "admin",
-    grupo: "Acesso e auditoria",
+    grupo: "Auditoria",
   },
 ];
 
