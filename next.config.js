@@ -9,6 +9,10 @@ const seguranca = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Rotas de PDF: precisam ser exibidas dentro de um <iframe> da própria página (janela de
+// visualização em vez de navegar pra fora), então usam SAMEORIGIN em vez de DENY.
+const segurancaPdf = seguranca.map((h) => (h.key === "X-Frame-Options" ? { ...h, value: "SAMEORIGIN" } : h));
+
 const nextConfig = {
   skipTrailingSlashRedirect: true,
   poweredByHeader: false,
@@ -20,7 +24,10 @@ const nextConfig = {
     optimizePackageImports: ["lucide-react"],
   },
   async headers() {
-    return [{ source: "/(.*)", headers: seguranca }];
+    return [
+      { source: "/((?!.*\\/pdf$).*)", headers: seguranca },
+      { source: "/:path*/pdf", headers: segurancaPdf },
+    ];
   },
 };
 
