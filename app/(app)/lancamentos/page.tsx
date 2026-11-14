@@ -34,7 +34,6 @@ export default async function LancamentosPage({
   const [
     { data: pessoas },
     { data: todasPessoasObra },
-    { data: contratosAtivos },
     { data: servicos },
     { data: lancamentos },
     { data: fechamentosObra },
@@ -43,15 +42,6 @@ export default async function LancamentosPage({
       ? supabase.from("pessoas").select("id, nome").eq("obra_id", obraId).eq("status", "ATIVO").eq("papel", "EMPREITEIRO").order("nome")
       : vazio,
     obraId ? supabase.from("pessoas").select("id, nome").eq("obra_id", obraId) : vazio,
-    // Contratos de empresas terceirizadas com status ATIVO para esta obra
-    obraId
-      ? supabase
-          .from("empresa_obra")
-          .select("id, tipo_servico, retencao_pct, retencao_contratual, empresas_terceirizadas(nome)")
-          .eq("obra_id", obraId)
-          .eq("status", "ATIVO")
-          .order("criado_em")
-      : vazio,
     obraId ? supabase.from("servicos").select("id, nome, tipo, valor_unitario").eq("obra_id", obraId).order("criado_em") : vazio,
     obraId
       ? supabase
@@ -65,14 +55,6 @@ export default async function LancamentosPage({
       : vazio,
     obraId ? supabase.from("fechamentos").select("tipo, mes_referencia").eq("obra_id", obraId) : vazio,
   ]);
-
-  const empresasContrato = (contratosAtivos ?? []).map((c: any) => ({
-    id: c.id,
-    empresa_nome: (c.empresas_terceirizadas as any)?.nome ?? "—",
-    tipo_servico: c.tipo_servico,
-    retencao_pct: Number(c.retencao_pct),
-    retencao_contratual: c.retencao_contratual,
-  }));
 
   const nomesPessoas: Record<string, string> = {};
   for (const p of todasPessoasObra ?? []) nomesPessoas[p.id] = p.nome;
@@ -109,7 +91,6 @@ export default async function LancamentosPage({
                 obraId={obraId}
                 pessoas={pessoas}
                 servicos={servicos ?? []}
-                empresasContrato={empresasContrato}
                 criarLancamento={criarLancamento}
               />
             ) : (
