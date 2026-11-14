@@ -62,7 +62,7 @@ export default async function FechamentoContratosPage({
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
             <div className="stat-tile"><span className="stat-label">Bruto medido no mês</span><span className="stat-value text-xl">{brl(b.bruto)}</span></div>
             <div className="stat-tile"><span className="stat-label">(−) Retenção</span><span className="stat-value text-xl">{brl(b.retido)}</span></div>
-            <div className="stat-tile"><span className="stat-label">(−) Vales descontados</span><span className="stat-value text-xl">{brl(b.valesDescontados)}</span></div>
+            <div className="stat-tile"><span className="stat-label">(−) Vales e descontos</span><span className="stat-value text-xl">{brl(b.valesDescontados)}</span></div>
             <div className="stat-tile !bg-primary/5"><span className="stat-label">Líquido a pagar</span><span className="stat-value text-xl">{brl(b.liquido)}</span></div>
             <div className="stat-tile"><span className="stat-label">Acumulado do contrato</span><span className="stat-value text-xl">{pct(b.valorContrato > 0 ? (b.valorAcumuladoTotal / b.valorContrato) * 100 : 0)}</span><span className="stat-hint">{brl(b.valorAcumuladoTotal)} de {brl(b.valorContrato)}</span></div>
           </div>

@@ -157,7 +157,7 @@ export function BoletimContratoPdf({ b, engenheiroNome, dataGeracao }: { b: Bole
                   );
                 })}
                 <View style={s.row}>
-                  <Text style={[s.tot, { flex: 3 }]}>TOTAL DE VALES DESCONTADOS</Text>
+                  <Text style={[s.tot, { flex: 3 }]}>TOTAL DE VALES E DESCONTOS</Text>
                   <Text style={[s.tot, s.num, { flex: 1.2 }]}>{f2(b.valesDescontados)}</Text>
                   <Text style={[s.tot, { flex: 1.2 }]}></Text>
                 </View>
@@ -169,7 +169,7 @@ export function BoletimContratoPdf({ b, engenheiroNome, dataGeracao }: { b: Bole
             <View style={s.resRow}><Text style={s.resLbl}>Valor total medido</Text><Text style={s.resVal}>R$ {f2(b.bruto)}</Text></View>
             <View style={s.resRow}><Text style={s.resLbl}>(-) Valor retido{retPct ? ` (${f2(Number(retPct))}%)` : ""}</Text><Text style={s.resVal}>{b.retido > 0 ? `R$ ${f2(b.retido)}` : "-"}</Text></View>
             {b.valesDescontados > 0 && (
-              <View style={s.resRow}><Text style={s.resLbl}>(-) Desconto de vales</Text><Text style={s.resVal}>R$ {f2(b.valesDescontados)}</Text></View>
+              <View style={s.resRow}><Text style={s.resLbl}>(-) Vales e descontos</Text><Text style={s.resVal}>R$ {f2(b.valesDescontados)}</Text></View>
             )}
             <View style={s.liquido}><Text style={[s.resLbl, { fontWeight: 700 }]}>VALOR FINAL A SER PAGO</Text><Text style={s.resVal}>R$ {f2(b.liquido)}</Text></View>
           </View>
