@@ -4,6 +4,8 @@ import { getUsuarioAtual, perfilDaRequisicao } from "@/lib/auth/getCurrentUserPr
 import { carregarAndamento } from "./dados";
 import { apontarStatus } from "./actions";
 import Grade from "./Grade";
+import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
+import { FileDown } from "lucide-react";
 
 export const metadata = { title: "Andamento de Obra" };
 
@@ -24,10 +26,21 @@ export default async function AndamentoObraPage({ searchParams }: { searchParams
           <h1 className="font-display text-2xl text-ink-900">Andamento de Obra</h1>
           <p className="text-sm text-ink-500 mt-1">% físico por pavimento, local e serviço, com peso por categoria.</p>
         </div>
-        {ehAdmin && obraId && (
-          <Link href={`/obras/andamento/configuracao?obra=${obraId}`} className="border border-border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-surface-subtle">
-            Configurar
-          </Link>
+        {obraId && (
+          <div className="flex gap-2">
+            <VisualizadorPdf
+              href={`/obras/andamento/relatorio/pdf?obra=${obraId}`}
+              titulo="Relatório de andamento"
+              className="inline-flex items-center gap-1.5 border border-border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-surface-subtle"
+            >
+              <FileDown className="w-4 h-4" /> Relatório PDF
+            </VisualizadorPdf>
+            {ehAdmin && (
+              <Link href={`/obras/andamento/configuracao?obra=${obraId}`} className="border border-border rounded-lg px-4 py-2 text-sm font-semibold hover:bg-surface-subtle">
+                Configurar
+              </Link>
+            )}
+          </div>
         )}
       </div>
 
