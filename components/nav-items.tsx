@@ -25,6 +25,7 @@ import {
   LifeBuoy,
   CalendarDays,
   Database,
+  TrendingUp,
 } from "lucide-react";
 
 // Setores do menu (coluna de ícones, no estilo do Sienge). Cada item de navegação pertence a um setor e a um grupo dentro dele.
@@ -70,6 +71,14 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/obras",
     icon: HardHat,
     description: "Cadastrar obras e informar se estão em andamento, concluídas ou entregues.",
+    secao: "obras",
+    grupo: "Obras",
+  },
+  {
+    label: "Andamento de Obra",
+    href: "/obras/andamento",
+    icon: TrendingUp,
+    description: "Acompanhar o % físico de cada etapa/serviço da obra.",
     secao: "obras",
     grupo: "Obras",
   },
