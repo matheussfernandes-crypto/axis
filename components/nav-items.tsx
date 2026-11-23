@@ -26,10 +26,12 @@ import {
   CalendarDays,
   Database,
   TrendingUp,
+  DraftingCompass,
+  BookOpen,
 } from "lucide-react";
 
 // Setores do menu (coluna de ícones, no estilo do Sienge). Cada item de navegação pertence a um setor e a um grupo dentro dele.
-export type SecaoId = "inicio" | "obras" | "medicoes" | "contratos" | "financeiro" | "admin";
+export type SecaoId = "inicio" | "obras" | "arquitetura" | "medicoes" | "contratos" | "financeiro" | "admin";
 
 export type Secao = {
   id: SecaoId;
@@ -41,6 +43,7 @@ export type Secao = {
 export const SECOES: Secao[] = [
   { id: "inicio", label: "Início", icon: Home, href: "/dashboard" },
   { id: "obras", label: "Obras", icon: HardHat },
+  { id: "arquitetura", label: "Arquitetura", icon: DraftingCompass },
   { id: "medicoes", label: "Medições e Vales", icon: ClipboardList },
   { id: "contratos", label: "Contratos", icon: Handshake },
   { id: "financeiro", label: "Financeiro", icon: Coins },
@@ -81,6 +84,24 @@ export const NAV_ITEMS: NavItem[] = [
     description: "Acompanhar o % físico de cada etapa/serviço da obra.",
     secao: "obras",
     grupo: "Obras",
+  },
+
+  // ---- Arquitetura ----
+  {
+    label: "Especificações",
+    href: "/arquitetura/especificacoes",
+    icon: DraftingCompass,
+    description: "Louças e metais, eletros e vidros de cada projeto, com folha em PDF.",
+    secao: "arquitetura",
+    grupo: "Arquitetura",
+  },
+  {
+    label: "Catálogo de modelos",
+    href: "/arquitetura/catalogo",
+    icon: BookOpen,
+    description: "Modelos (marca, linha, acabamento e foto) usados nas especificações.",
+    secao: "arquitetura",
+    grupo: "Arquitetura",
   },
 
   // ---- Medições e Vales (mão de obra própria) ----

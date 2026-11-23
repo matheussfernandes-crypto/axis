@@ -6,6 +6,7 @@ export const MODULOS = [
   { key: "contratos", label: "Contratos" },
   { key: "lancamentos", label: "Lançamentos" },
   { key: "financeiro", label: "Financeiro" },
+  { key: "arquitetura", label: "Arquitetura" },
 ] as const;
 
 export type ItemDef = { key: string; modulo: string; label: string; prefixos: string[] };
@@ -20,6 +21,8 @@ export const ITENS: ItemDef[] = [
   { key: "lancamentos", modulo: "lancamentos", label: "Lançamentos", prefixos: ["/lancamentos"] },
   { key: "financeiro/dashboard", modulo: "financeiro", label: "Dashboard de gastos", prefixos: ["/financeiro/dashboard"] },
   { key: "financeiro/retiradas", modulo: "financeiro", label: "Retiradas de retido", prefixos: ["/financeiro/retiradas"] },
+  { key: "arquitetura/especificacoes", modulo: "arquitetura", label: "Especificações", prefixos: ["/arquitetura", "/arquitetura/especificacoes"] },
+  { key: "arquitetura/catalogo", modulo: "arquitetura", label: "Catálogo de modelos", prefixos: ["/arquitetura/catalogo"] },
 ];
 
 // Chaves antigas que continuam valendo
