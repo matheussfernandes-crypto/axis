@@ -22,18 +22,21 @@ export async function assinarImagens(supabase: any, imgs: (string | null | undef
   return out;
 }
 
-/** Reduz a foto (lado maior 900 px, JPEG) antes de enviar. Roda no navegador. */
+/** Reduz a foto (lado maior 900 px) antes de enviar. PNG continua PNG (mantém o fundo transparente); o resto vira JPEG. Roda no navegador. */
 export async function reduzirFoto(arquivo: Blob, lado = 900): Promise<Blob> {
+  const png = arquivo.type === "image/png";
   const bmp = await createImageBitmap(arquivo);
   const k = Math.min(1, lado / Math.max(bmp.width, bmp.height));
   const c = document.createElement("canvas");
   c.width = Math.round(bmp.width * k);
   c.height = Math.round(bmp.height * k);
   const ctx = c.getContext("2d")!;
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, c.width, c.height);
+  if (!png) {
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, c.width, c.height);
+  }
   ctx.drawImage(bmp, 0, 0, c.width, c.height);
-  return await new Promise((ok) => c.toBlob((b) => ok(b ?? arquivo), "image/jpeg", 0.85));
+  return await new Promise((ok) => c.toBlob((b) => ok(b ?? arquivo), png ? "image/png" : "image/jpeg", 0.85));
 }
 
 /** Envia a foto para a pasta da construtora no bucket e devolve o caminho (vai no campo img). Roda no navegador. */
@@ -41,8 +44,9 @@ export async function enviarFoto(supabase: any, arquivo: Blob): Promise<string> 
   const blob = await reduzirFoto(arquivo);
   const { data: pasta } = await supabase.rpc("minha_construtora");
   if (!pasta) throw new Error("Não foi possível identificar a construtora. Entre de novo.");
-  const caminho = `${pasta}/esp/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-  const { error } = await supabase.storage.from(BUCKET_ESP).upload(caminho, blob, { contentType: "image/jpeg", upsert: false });
+  const png = blob.type === "image/png";
+  const caminho = `${pasta}/esp/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${png ? "png" : "jpg"}`;
+  const { error } = await supabase.storage.from(BUCKET_ESP).upload(caminho, blob, { contentType: png ? "image/png" : "image/jpeg", upsert: false });
   if (error) throw new Error("Não foi possível enviar a foto: " + error.message);
   return caminho;
 }

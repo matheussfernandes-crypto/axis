@@ -1,7 +1,9 @@
 import { createElement, type ReactNode } from "react";
 import { Circle, Document, Image, Page, Path, Polygon, Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 
-// Folha de especificação (louças e metais, eletros, vidros e box) em paisagem.
+// Folha de especificação (louças e metais, eletros, vidros e box) em paisagem, um ambiente embaixo do outro.
+// Ambiente curto não se divide entre páginas; ambiente longo continua na página seguinte, linha a linha
+// (forçar um bloco maior que a página a ficar inteiro trava o gerador).
 // Sai só com o logo enviado no projeto: nenhum nome de sistema aparece na folha.
 
 export type ItemPdf = { id: string; material: string; texto: string; medidas: string; qtd: number; foto?: string; desenho?: string };
@@ -20,8 +22,8 @@ const s = StyleSheet.create({
   dir: { width: 150, alignItems: "flex-end" },
   dirTxt: { fontSize: 7.5, color: "#444", lineHeight: 1.5 },
   obs: { backgroundColor: "#f1f1f1", borderLeftWidth: 2.5, borderLeftColor: COR.escuro, paddingVertical: 5, paddingHorizontal: 8, marginBottom: 10, fontSize: 8.5, fontWeight: 700 },
-  grade: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  amb: { width: "49%", marginBottom: 12 },
+  grade: { flexDirection: "column" },
+  amb: { width: "100%", marginBottom: 12 },
   ambNome: { fontSize: 9.5, fontWeight: 700, color: COR.escuro, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3 },
   linha: { flexDirection: "row" },
   th: { backgroundColor: COR.escuro, color: "#fff", fontSize: 6.4, fontWeight: 700, textTransform: "uppercase", paddingVertical: 3.5, paddingHorizontal: 4, borderWidth: 0.4, borderColor: COR.escuro },
@@ -38,8 +40,8 @@ export function EspecificacaoPdf({
   medidas: boolean; vidros: boolean; arquivo: string; ambientes: AmbientePdf[];
 }) {
   const a3 = papel === "A3";
-  const w = { im: vidros ? (a3 ? 118 : 96) : a3 ? 66 : 54, mt: a3 ? 92 : 78, md: a3 ? 92 : 78, qt: 26 };
-  const fotoAlt = vidros ? (a3 ? 78 : 62) : a3 ? 46 : 38;
+  const w = { im: vidros ? (a3 ? 130 : 110) : a3 ? 90 : 76, mt: a3 ? 130 : 110, md: a3 ? 130 : 110, qt: 36 };
+  const fotoAlt = vidros ? (a3 ? 84 : 70) : a3 ? 58 : 48;
   return (
     <Document title={arquivo}>
       <Page size={papel} orientation="landscape" style={s.page}>
@@ -60,9 +62,9 @@ export function EspecificacaoPdf({
 
         <View style={s.grade}>
           {ambientes.map((a) => (
-            <View key={a.nome} style={s.amb} wrap={false}>
-              <Text style={s.ambNome}>{a.nome}</Text>
-              <View style={s.linha}>
+            <View key={a.nome} style={s.amb} wrap={a.itens.length > 3}>
+              <Text style={s.ambNome} minPresenceAhead={fotoAlt + 40}>{a.nome}</Text>
+              <View style={s.linha} minPresenceAhead={fotoAlt + 20}>
                 <Text style={[s.th, { width: w.im }]}>Imagem</Text>
                 <Text style={[s.th, { width: w.mt }]}>Material</Text>
                 <Text style={[s.th, { flex: 1 }]}>{vidros ? "Descrição" : "Referência"}</Text>
@@ -72,7 +74,7 @@ export function EspecificacaoPdf({
               {a.itens.map((i, k) => {
                 const fundo = k % 2 ? { backgroundColor: COR.zebra } : {};
                 return (
-                  <View key={i.id} style={s.linha}>
+                  <View key={i.id} style={s.linha} wrap={false}>
                     <View style={[s.td, fundo, { width: w.im, alignItems: "center" }]}>
                       {i.foto ? (
                         <Image src={i.foto} style={{ width: w.im - 8, height: fotoAlt, objectFit: "contain" }} />
