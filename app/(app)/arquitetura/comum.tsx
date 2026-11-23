@@ -6,7 +6,7 @@ import { createPortal } from "react-dom";
 import { ImageOff, ImagePlus, Search, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-import { enviarFoto, enviarLogo, urlImg } from "@/lib/especificacoes/imagem";
+import { enviarFoto, enviarLogo, enviarLogoPadrao, tirarLogoPadrao, urlImg } from "@/lib/especificacoes/imagem";
 import { salvarLogoProjeto } from "./actions";
 import { FAIXAS, fold, type Grupo, type Vidro } from "@/lib/especificacoes/regras";
 import { esquemaVidro } from "@/lib/especificacoes/desenho";
@@ -211,6 +211,63 @@ export function LogoProjeto({ projetoId, valor, assinadas }: { projetoId: string
           )}
         </div>
         {erro && <p className="text-xs text-danger">{erro}</p>}
+      </div>
+      <input ref={input} type="file" accept="image/png" className="hidden" onChange={(e) => e.target.files?.[0] && escolher(e.target.files[0])} />
+    </div>
+  );
+}
+
+/** Logo padrão de todos os PDFs da Arquitetura (o projeto com logo próprio usa o dele). */
+export function LogoPadrao({ url }: { url: string | null }) {
+  const router = useRouter();
+  const input = useRef<HTMLInputElement>(null);
+  const [previa, setPrevia] = useState<string | null>(null);
+  const [ocupado, setOcupado] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const atual = previa ?? url;
+  async function escolher(f: File) {
+    setErro(null);
+    setOcupado(true);
+    try {
+      await enviarLogoPadrao(createClient(), f);
+      setPrevia(URL.createObjectURL(f));
+      router.refresh();
+    } catch (e: any) {
+      setErro(e.message);
+    } finally {
+      setOcupado(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+  async function tirar() {
+    setOcupado(true);
+    try {
+      await tirarLogoPadrao(createClient());
+      setPrevia("");
+      router.refresh();
+    } finally {
+      setOcupado(false);
+    }
+  }
+  return (
+    <div className="card flex flex-wrap items-center gap-4">
+      <div className="flex h-16 w-40 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-white">
+        {atual ? <img src={atual} alt="Logo dos PDFs" className="h-full w-full object-contain p-1.5" /> : <ImageOff className="h-4 w-4 text-ink-300" />}
+      </div>
+      <div className="min-w-[220px] flex-1">
+        <div className="font-semibold text-primaryDark">Logo dos PDFs</div>
+        <p className="text-sm text-ink-500">Sai no cabeçalho de todas as folhas de especificação. Um projeto com logo próprio usa o dele.</p>
+        {erro && <p className="text-xs text-danger">{erro}</p>}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" className={btnSec} disabled={ocupado} onClick={() => input.current?.click()}>
+          <ImagePlus className="h-4 w-4" /> {ocupado ? "Enviando…" : atual ? "Trocar logo (PNG)" : "Adicionar logo (PNG)"}
+        </button>
+        {atual && (
+          <button type="button" className={btnSec} disabled={ocupado} onClick={tirar}>
+            Tirar
+          </button>
+        )}
       </div>
       <input ref={input} type="file" accept="image/png" className="hidden" onChange={(e) => e.target.files?.[0] && escolher(e.target.files[0])} />
     </div>

@@ -11,7 +11,7 @@ import { enviarFoto } from "@/lib/especificacoes/imagem";
 import { fold, GRUPOS } from "@/lib/especificacoes/regras";
 import Selecao from "@/components/ui/Selecao";
 import { excluirProjeto, importarLinhas, salvarProjeto } from "../actions";
-import { pedirConfirmacao } from "../comum";
+import { LogoPadrao, pedirConfirmacao } from "../comum";
 import { btnIcone, btnPrim, btnSec, campo, erroCls, rotulo } from "../ui";
 
 export type ProjetoResumo = {
@@ -20,7 +20,7 @@ export type ProjetoResumo = {
 
 export type ObraOpcao = { id: string; nome: string };
 
-export default function ListaProjetos({ projetos, obras }: { projetos: ProjetoResumo[]; obras: ObraOpcao[] }) {
+export default function ListaProjetos({ projetos, obras, logoPadrao }: { projetos: ProjetoResumo[]; obras: ObraOpcao[]; logoPadrao: string | null }) {
   const router = useRouter();
   const [busca, setBusca] = useState("");
   const [editando, setEditando] = useState<ProjetoResumo | null>(null);
@@ -118,6 +118,8 @@ export default function ListaProjetos({ projetos, obras }: { projetos: ProjetoRe
 
       {erro && <div className={erroCls}>{erro}</div>}
       {aviso && <div className="rounded-[10px] border border-[#BFE3CC] bg-[#EAF7EF] px-3 py-2 text-sm text-success">{aviso}</div>}
+
+      <LogoPadrao url={logoPadrao} />
 
       <PainelCadastro titulo="Projetos" rotuloBotao="Novo projeto">
         <FormProjeto obras={obras} onSalvar={(fd) => gravar(fd)} />

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createClient } from "@/lib/supabase/server";
-import { BUCKET_ESP, ehDoBucket } from "@/lib/especificacoes/imagem";
+import { BUCKET_ESP, caminhoLogoPadrao, ehDoBucket } from "@/lib/especificacoes/imagem";
 import { esquemaVidro } from "@/lib/especificacoes/desenho";
 import { GRUPOS, descVidro, ehGrupo, fold, medidasVidro, type Grupo, type Vidro } from "@/lib/especificacoes/regras";
 import { EspecificacaoPdf, type AmbientePdf } from "@/lib/pdf/EspecificacaoPdf";
@@ -26,8 +26,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   ]);
   if (!projeto) return NextResponse.json({ erro: "Projeto não encontrado." }, { status: 404 });
 
+  // logo: o do projeto ou, se não tiver, o logo padrão da Arquitetura
+  const { data: pasta } = await supabase.rpc("minha_construtora");
+  const logoPath = projeto.logo || (pasta ? caminhoLogoPadrao(pasta) : null);
   // fotos e logo baixados do bucket e embutidos no PDF
-  const caminhos = Array.from(new Set([...(itens ?? []).map((i) => i.img), projeto.logo].filter(ehDoBucket))) as string[];
+  const caminhos = Array.from(new Set([...(itens ?? []).map((i) => i.img), logoPath].filter(ehDoBucket))) as string[];
   const embutidas: Record<string, string> = {};
   await Promise.all(
     caminhos.map(async (c) => {
@@ -65,7 +68,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       rev,
       emitido: new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }),
       obs: nota?.obs ?? "",
-      logo: projeto.logo ? embutidas[projeto.logo] : undefined,
+      logo: logoPath ? embutidas[logoPath] : undefined,
       medidas: g.medidas,
       vidros,
       arquivo,

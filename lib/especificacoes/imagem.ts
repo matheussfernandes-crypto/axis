@@ -58,3 +58,25 @@ export async function enviarLogo(supabase: any, arquivo: File): Promise<string> 
   if (error) throw new Error("Não foi possível enviar o logo: " + error.message);
   return caminho;
 }
+
+/** Logo padrão dos PDFs da Arquitetura (vale para os projetos sem logo próprio): um arquivo fixo na pasta da construtora. */
+export const caminhoLogoPadrao = (construtoraId: string) => `${construtoraId}/esp/logo-padrao.png`;
+
+/** Troca o logo padrão (PNG). Roda no navegador. */
+export async function enviarLogoPadrao(supabase: any, arquivo: File): Promise<string> {
+  if (arquivo.type !== "image/png") throw new Error("O logo precisa ser um arquivo PNG.");
+  if (arquivo.size > 2 * 1024 * 1024) throw new Error("O logo passa de 2 MB. Use uma imagem menor.");
+  const { data: pasta } = await supabase.rpc("minha_construtora");
+  if (!pasta) throw new Error("Não foi possível identificar a construtora. Entre de novo.");
+  const caminho = caminhoLogoPadrao(pasta);
+  await supabase.storage.from(BUCKET_ESP).remove([caminho]);
+  const { error } = await supabase.storage.from(BUCKET_ESP).upload(caminho, arquivo, { contentType: "image/png", upsert: false });
+  if (error) throw new Error("Não foi possível enviar o logo: " + error.message);
+  return caminho;
+}
+
+/** Tira o logo padrão. Roda no navegador. */
+export async function tirarLogoPadrao(supabase: any) {
+  const { data: pasta } = await supabase.rpc("minha_construtora");
+  if (pasta) await supabase.storage.from(BUCKET_ESP).remove([caminhoLogoPadrao(pasta)]);
+}
