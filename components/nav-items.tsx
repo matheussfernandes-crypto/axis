@@ -22,6 +22,7 @@ import {
   Settings,
   ClipboardCheck,
   KeyRound,
+  Globe2,
   LifeBuoy,
   CalendarDays,
   Database,
@@ -178,6 +179,18 @@ export const NAV_ITEMS: NavItem[] = [
     allowedSetores: ["ADMIN", "FINANCEIRO"],
     secao: "contratos",
     grupo: "Execução",
+  },
+
+  // ---- Dono do Axis: todas as empresas cadastradas (só quem está em axis_admins) ----
+  {
+    label: "Empresas do Axis",
+    href: "/plataforma",
+    icon: Globe2,
+    description: "Todas as empresas cadastradas: aceitar, suspender, ativar plano e entrar no site de cada uma.",
+    allowedSetores: [],
+    extra: "axis_plataforma",
+    secao: "admin",
+    grupo: "Dono do Axis",
   },
 
   // ---- Administração de acessos (só o gestor, pela permissão "gestor_acessos") ----

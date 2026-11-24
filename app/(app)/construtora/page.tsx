@@ -13,8 +13,8 @@ export default async function ConstrutoraPage() {
   const { data: perfil } = await perfilDaRequisicao(user!.id);
   if (perfil?.setor !== "ADMIN") redirect("/dashboard");
 
-  const { data: eu } = await supabase.from("perfis").select("construtora_id").eq("id", user!.id).single();
-  const { data: c } = await supabase.from("construtoras").select("id, nome, cnpj, codigo_convite, logo_path, logo_atualizado_em").eq("id", eu!.construtora_id).single();
+  const { data: cid } = await supabase.rpc("minha_construtora");
+  const { data: c } = await supabase.from("construtoras").select("id, nome, cnpj, codigo_convite, logo_path, logo_atualizado_em").eq("id", cid).single();
   const logoUrl = c?.logo_path ? (await supabase.storage.from("logos").createSignedUrl(c.logo_path, 600)).data?.signedUrl : null;
 
   return (

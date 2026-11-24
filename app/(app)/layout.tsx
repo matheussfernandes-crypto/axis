@@ -1,13 +1,14 @@
 import { redirect } from "next/navigation";
-import { getCurrentUserProfile } from "@/lib/auth/getCurrentUserProfile";
+import { getCurrentUserProfile, getEmpresaAtual } from "@/lib/auth/getCurrentUserProfile";
 import AppShell from "@/components/AppShell";
+import AvisoEmpresa from "@/components/AvisoEmpresa";
 
 // Shell único para todas as páginas autenticadas: busca o perfil UMA vez aqui
 // (em vez de cada página + o Topbar antigo repetirem a mesma consulta) e
 // garante a barra lateral em todo lugar, sem precisar copiar <Topbar/> em
 // cada página.
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const profile = await getCurrentUserProfile();
+  const [profile, empresa] = await Promise.all([getCurrentUserProfile(), getEmpresaAtual()]);
 
   if (!profile) {
     // O middleware só checa se existe cookie de sessão, não se ela ainda é
@@ -21,9 +22,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/auth/limpar-sessao");
   }
   if (profile.status !== "aprovado") redirect("/aguardando-aprovacao");
+  // empresa ainda não aceita pelo dono do Axis, suspensa ou cancelada: ninguém dela entra (o dono do Axis sempre entra)
+  if (empresa && !empresa.ehAxisAdmin && ["PENDENTE", "SUSPENSO", "CANCELADO"].includes(empresa.plano)) redirect("/aguardando-aprovacao");
+
+  const extras = [...profile.acessos, ...(profile.setor === "ADMIN" ? ["gestor_acessos"] : []), ...(empresa?.ehAxisAdmin ? ["axis_plataforma"] : [])];
+  const emOutra = !!empresa && empresa.ehAxisAdmin && empresa.id !== empresa.propriaId;
 
   return (
-    <AppShell setor={profile.setor} extras={[...profile.acessos, ...(profile.setor === "ADMIN" ? ["gestor_acessos"] : [])]} nome={profile.nome} naoLidas={profile.naoLidas} contadores={{ contratosPendentes: profile.contratosPendentes }}>
+    <AppShell setor={profile.setor} extras={extras} nome={profile.nome} naoLidas={profile.naoLidas} contadores={{ contratosPendentes: profile.contratosPendentes }}>
+      {emOutra && <AvisoEmpresa nome={empresa!.nome} propria={empresa!.propriaNome} />}
       {children}
     </AppShell>
   );

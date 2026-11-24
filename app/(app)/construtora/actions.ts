@@ -7,9 +7,12 @@ async function minhaConstrutoraComoAdmin() {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Sessão expirada.");
-  const { data: p } = await supabase.from("perfis").select("setor, status, construtora_id").eq("id", user.id).single();
-  if (p?.setor !== "ADMIN" || p?.status !== "aprovado" || !p.construtora_id) throw new Error("Só o administrador altera os dados da construtora.");
-  return { supabase, id: p.construtora_id as string };
+  const [{ data: p }, { data: cid }] = await Promise.all([
+    supabase.from("perfis").select("setor, status").eq("id", user.id).single(),
+    supabase.rpc("minha_construtora"),
+  ]);
+  if (p?.setor !== "ADMIN" || p?.status !== "aprovado" || !cid) throw new Error("Só o administrador altera os dados da construtora.");
+  return { supabase, id: cid as string };
 }
 
 export async function salvarDados(formData: FormData) {

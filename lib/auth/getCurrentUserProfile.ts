@@ -71,3 +71,25 @@ export const getCurrentUserProfile = cache(async (): Promise<CurrentUserProfile 
 export async function perfilDaRequisicao(userId: string) {
   return { data: await getPerfilAtual(userId) };
 }
+
+export type EmpresaAtual = {
+  id: string;
+  nome: string;
+  plano: string;
+  testeAte: string | null;
+  ehAxisAdmin: boolean; // dono do Axis: vê "Empresas do Axis" e pode entrar em qualquer empresa
+  propriaId: string;
+  propriaNome: string;
+};
+
+/** Empresa que a pessoa está vendo agora (para o dono do Axis pode ser outra que não a dele). Uma vez por requisição. */
+export const getEmpresaAtual = cache(async (): Promise<EmpresaAtual | null> => {
+  const supabase = createClient();
+  const { data } = await supabase.rpc("empresa_situacao");
+  const e = Array.isArray(data) ? data[0] : data;
+  if (!e) return null;
+  return {
+    id: e.empresa_id, nome: e.empresa_nome, plano: e.plano, testeAte: e.teste_ate, ehAxisAdmin: !!e.eh_axis_admin,
+    propriaId: e.propria_id, propriaNome: e.propria_nome,
+  };
+});

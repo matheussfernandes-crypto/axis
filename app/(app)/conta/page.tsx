@@ -19,9 +19,9 @@ export default async function ContaPage() {
   const { data: perfil } = await perfilDaRequisicao(user!.id);
   if (perfil?.setor !== "ADMIN") redirect("/dashboard");
 
-  const { data: eu } = await supabase.from("perfis").select("construtora_id").eq("id", user!.id).single();
+  const { data: cid } = await supabase.rpc("minha_construtora");
   const [{ data: c }, { data: planos }, { data: faturas }, { count: usuarios }, { count: obrasAtivas }] = await Promise.all([
-    supabase.from("construtoras").select("nome, plano, plano_id, teste_ate, ciclo, assinatura_desde, proxima_cobranca").eq("id", eu!.construtora_id).single(),
+    supabase.from("construtoras").select("nome, plano, plano_id, teste_ate, ciclo, assinatura_desde, proxima_cobranca").eq("id", cid).single(),
     supabase.from("planos").select("id, nome, descricao, preco_mensal, limite_obras, limite_usuarios, modulos").order("ordem"),
     supabase.from("faturas").select("id, competencia, valor, vencimento, status, pago_em, forma_pagamento, link_pagamento, nota_fiscal_url").order("vencimento", { ascending: false }).limit(24),
     supabase.from("perfis").select("id", { count: "exact", head: true }).eq("status", "aprovado"),
