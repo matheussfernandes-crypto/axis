@@ -1,116 +1,103 @@
 import { createElement, type ReactNode } from "react";
 import { Circle, Document, Image, Page, Path, Polygon, Rect, StyleSheet, Svg, Text, View } from "@react-pdf/renderer";
 
-// Folha de especificação (louças e metais, eletros, vidros e box) em paisagem, um ambiente embaixo do outro,
-// no visual das tabelas da arquitetura: faixas bege, título em barra cinza-clara, tabela branca com bordas pretas finas
-// e observação em vermelho. Ambiente curto não se divide entre páginas; ambiente longo continua na página seguinte,
-// linha a linha (forçar um bloco maior que a página a ficar inteiro trava o gerador).
-// Sai só com o logo enviado: nenhum nome de sistema aparece na folha.
+// Folha de especificação (louças e metais, eletros, vidros e box) em paisagem, um ambiente embaixo do outro.
+// Ambiente curto não se divide entre páginas; ambiente longo continua na página seguinte, linha a linha
+// (forçar um bloco maior que a página a ficar inteiro trava o gerador).
+// Sai só com o logo enviado no projeto: nenhum nome de sistema aparece na folha.
 
 export type ItemPdf = { id: string; material: string; texto: string; medidas: string; qtd: number; foto?: string; desenho?: string };
 export type AmbientePdf = { nome: string; itens: ItemPdf[] };
 
-const COR = { texto: "#000000", borda: "#000000", faixa: "#d3c7b6", barra: "#ebece8", alerta: "#ff3131", suave: "#6e6e6e" };
-const FAIXA = 14;
+const COR = { bege: "#d3c7b6", escuro: "#111111", linha: "#d9d9d9", zebra: "#f6f6f6", texto: "#151515", suave: "#6e6e6e" };
 
 const s = StyleSheet.create({
-  page: { paddingTop: FAIXA + 14, paddingBottom: FAIXA + 46, paddingHorizontal: 30, fontFamily: "Helvetica", color: COR.texto },
-  faixaTopo: { position: "absolute", top: 0, left: 0, right: 0, height: FAIXA, backgroundColor: COR.faixa },
-  faixaBase: { position: "absolute", bottom: 0, left: 0, right: 0, height: FAIXA, backgroundColor: COR.faixa },
-  barra: { backgroundColor: COR.barra, paddingVertical: 7, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", marginBottom: 10 },
-  titulo: { flex: 1, textAlign: "center", fontSize: 13, fontFamily: "Helvetica-Oblique", letterSpacing: 1.6, textTransform: "uppercase" },
-  rev: { position: "absolute", right: 12, top: 5, width: 120, fontSize: 6.8, color: "#444", textAlign: "right", lineHeight: 1.4 },
-  dados: { marginBottom: 10 },
-  dadoLinha: { flexDirection: "row", alignItems: "flex-end", marginBottom: 2 },
-  dadoRot: { fontSize: 11, letterSpacing: 1.2, marginRight: 5 },
-  dadoVal: { fontSize: 8.5, letterSpacing: 0.9, textTransform: "uppercase", paddingBottom: 1 },
+  page: { paddingTop: 24, paddingBottom: 34, paddingHorizontal: 26, fontFamily: "Helvetica", color: COR.texto },
+  topo: { flexDirection: "row", alignItems: "center", borderBottomWidth: 1.5, borderBottomColor: COR.escuro, paddingBottom: 7, marginBottom: 10 },
+  logoBox: { width: 150, height: 48, justifyContent: "center" },
+  logo: { maxWidth: 150, maxHeight: 48, objectFit: "contain" },
+  centro: { flex: 1, alignItems: "center", paddingHorizontal: 10 },
+  titulo: { fontSize: 14, fontWeight: 700, color: COR.escuro, textTransform: "uppercase", letterSpacing: 0.6 },
+  sub: { fontSize: 8.5, color: "#444", marginTop: 3 },
+  dir: { width: 150, alignItems: "flex-end" },
+  dirTxt: { fontSize: 7.5, color: "#444", lineHeight: 1.5 },
+  obs: { backgroundColor: "#f1f1f1", borderLeftWidth: 2.5, borderLeftColor: COR.bege, paddingVertical: 5, paddingHorizontal: 8, marginBottom: 10, fontSize: 8.5, fontWeight: 700 },
+  grade: { flexDirection: "column" },
   amb: { width: "100%", marginBottom: 12 },
-  ambNome: { fontSize: 9.5, letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 },
+  ambNome: { fontSize: 9.5, fontWeight: 700, color: COR.escuro, textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 3 },
   linha: { flexDirection: "row" },
-  th: { fontSize: 7, letterSpacing: 1, textTransform: "uppercase", textAlign: "center", paddingVertical: 4, paddingHorizontal: 4, borderWidth: 0.6, borderColor: COR.borda, marginLeft: -0.6 },
-  td: { fontSize: 7.4, letterSpacing: 0.4, lineHeight: 1.35, paddingVertical: 4, paddingHorizontal: 6, borderWidth: 0.6, borderColor: COR.borda, marginLeft: -0.6, marginTop: -0.6, justifyContent: "center", alignItems: "center", textAlign: "center" },
-  mat: { fontSize: 6.8, letterSpacing: 0.8, textTransform: "uppercase", textAlign: "center" },
-  obs: { fontSize: 7.6, fontFamily: "Helvetica-Oblique", letterSpacing: 0.6, color: COR.alerta, marginTop: 2 },
+  th: { backgroundColor: COR.bege, color: COR.escuro, fontSize: 6.4, fontWeight: 700, textTransform: "uppercase", paddingVertical: 3.5, paddingHorizontal: 4, borderWidth: 0.4, borderColor: COR.bege },
+  td: { fontSize: 7.6, paddingVertical: 4, paddingHorizontal: 4, borderWidth: 0.4, borderColor: COR.linha, justifyContent: "center" },
+  mat: { fontSize: 7, fontWeight: 700, color: COR.escuro },
   vazio: { fontSize: 9, color: COR.suave, marginTop: 20, textAlign: "center" },
-  rodape: { position: "absolute", bottom: FAIXA + 6, left: 30, right: 30, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" },
-  rodTxt: { fontSize: 6, color: COR.suave, letterSpacing: 0.4 },
-  logo: { maxWidth: 120, maxHeight: 30, objectFit: "contain" },
+  rodape: { position: "absolute", bottom: 14, left: 26, right: 26, flexDirection: "row", justifyContent: "space-between", fontSize: 6.5, color: COR.suave, borderTopWidth: 0.5, borderTopColor: COR.linha, paddingTop: 4 },
 });
 
-const doisDig = (n: number) => String(n).padStart(2, "0");
-
 export function EspecificacaoPdf({
-  papel, titulo, subtitulo, cliente, obra, rev, emitido, obs, logo, medidas, vidros, arquivo, ambientes,
+  papel, titulo, subtitulo, rev, emitido, obs, logo, medidas, vidros, arquivo, ambientes,
 }: {
-  papel: "A3" | "A4"; titulo: string; subtitulo: string; cliente?: string; obra?: string; rev: string; emitido: string; obs: string; logo?: string;
+  papel: "A3" | "A4"; titulo: string; subtitulo: string; rev: string; emitido: string; obs: string; logo?: string;
   medidas: boolean; vidros: boolean; arquivo: string; ambientes: AmbientePdf[];
 }) {
   const a3 = papel === "A3";
-  const w = { mt: a3 ? 140 : 110, im: vidros ? (a3 ? 150 : 124) : a3 ? 120 : 100, md: a3 ? 130 : 110, qt: a3 ? 80 : 66 };
-  const fotoAlt = vidros ? (a3 ? 90 : 74) : a3 ? 70 : 56;
+  const w = { im: vidros ? (a3 ? 130 : 110) : a3 ? 90 : 76, mt: a3 ? 130 : 110, md: a3 ? 130 : 110, qt: 36 };
+  const fotoAlt = vidros ? (a3 ? 84 : 70) : a3 ? 58 : 48;
   return (
     <Document title={arquivo}>
       <Page size={papel} orientation="landscape" style={s.page}>
-        <View style={s.faixaTopo} fixed />
-        <View style={s.faixaBase} fixed />
-
-        <View style={s.barra}>
-          <Text style={s.titulo}>{titulo}</Text>
-          <View style={s.rev}>
-            <Text>Revisão {rev}</Text>
-            <Text>Emitido em {emitido}</Text>
+        <View style={s.topo} fixed>
+          <View style={s.logoBox}>{logo ? <Image style={s.logo} src={logo} /> : null}</View>
+          <View style={s.centro}>
+            <Text style={s.titulo}>{titulo}</Text>
+            {subtitulo ? <Text style={s.sub}>{subtitulo}</Text> : null}
+          </View>
+          <View style={s.dir}>
+            <Text style={s.dirTxt}>Revisão {rev}</Text>
+            <Text style={s.dirTxt}>Emitido em {emitido}</Text>
           </View>
         </View>
 
-        {cliente || obra ? (
-          <View style={s.dados}>
-            {cliente ? <View style={s.dadoLinha}><Text style={s.dadoRot}>CLIENTES:</Text><Text style={s.dadoVal}>{cliente}</Text></View> : null}
-            {obra ? <View style={s.dadoLinha}><Text style={s.dadoRot}>OBRA:</Text><Text style={s.dadoVal}>{obra}</Text></View> : null}
-          </View>
-        ) : subtitulo ? (
-          <View style={s.dados}><Text style={s.dadoVal}>{subtitulo}</Text></View>
-        ) : null}
-
+        {obs ? <Text style={s.obs}>{obs}</Text> : null}
         {!ambientes.length ? <Text style={s.vazio}>Nenhum item especificado neste grupo.</Text> : null}
 
-        {ambientes.map((a) => (
-          <View key={a.nome} style={s.amb} wrap={a.itens.length > 3}>
-            <Text style={s.ambNome} minPresenceAhead={fotoAlt + 40}>{a.nome}</Text>
-            <View style={s.linha} minPresenceAhead={fotoAlt + 20}>
-              <Text style={[s.th, { width: w.mt, marginLeft: 0 }]}>Item</Text>
-              <Text style={[s.th, { width: w.im }]}>Imagem</Text>
-              <Text style={[s.th, { flex: 1 }]}>{vidros ? "Descrição" : "Modelo sugerido"}</Text>
-              {medidas ? <Text style={[s.th, { width: w.md }]}>Medidas</Text> : null}
-              <Text style={[s.th, { width: w.qt }]}>Quantidade</Text>
-            </View>
-            {a.itens.map((i) => (
-              <View key={i.id} style={s.linha} wrap={false}>
-                <View style={[s.td, { width: w.mt, marginLeft: 0 }]}><Text style={s.mat}>{i.material}</Text></View>
-                <View style={[s.td, { width: w.im }]}>
-                  {i.foto ? (
-                    <Image src={i.foto} style={{ width: w.im - 14, height: fotoAlt, objectFit: "contain" }} />
-                  ) : i.desenho ? (
-                    svgParaPdf(i.desenho, w.im - 14, fotoAlt)
-                  ) : (
-                    <View style={{ width: w.im - 14, height: fotoAlt }} />
-                  )}
-                </View>
-                <View style={[s.td, { flex: 1 }]}><Text>{i.texto}</Text></View>
-                {medidas ? <View style={[s.td, { width: w.md }]}><Text>{i.medidas}</Text></View> : null}
-                <View style={[s.td, { width: w.qt }]}><Text>{doisDig(i.qtd)}</Text></View>
+        <View style={s.grade}>
+          {ambientes.map((a) => (
+            <View key={a.nome} style={s.amb} wrap={a.itens.length > 3}>
+              <Text style={s.ambNome} minPresenceAhead={fotoAlt + 40}>{a.nome}</Text>
+              <View style={s.linha} minPresenceAhead={fotoAlt + 20}>
+                <Text style={[s.th, { width: w.im }]}>Imagem</Text>
+                <Text style={[s.th, { width: w.mt }]}>Material</Text>
+                <Text style={[s.th, { flex: 1 }]}>{vidros ? "Descrição" : "Referência"}</Text>
+                {medidas ? <Text style={[s.th, { width: w.md }]}>Medidas</Text> : null}
+                <Text style={[s.th, { width: w.qt, textAlign: "center" }]}>Qtd.</Text>
               </View>
-            ))}
-          </View>
-        ))}
-
-        {obs ? <Text style={s.obs}>{obs}</Text> : null}
+              {a.itens.map((i, k) => {
+                const fundo = k % 2 ? { backgroundColor: COR.zebra } : {};
+                return (
+                  <View key={i.id} style={s.linha} wrap={false}>
+                    <View style={[s.td, fundo, { width: w.im, alignItems: "center" }]}>
+                      {i.foto ? (
+                        <Image src={i.foto} style={{ width: w.im - 8, height: fotoAlt, objectFit: "contain" }} />
+                      ) : i.desenho ? (
+                        svgParaPdf(i.desenho, w.im - 8, fotoAlt)
+                      ) : (
+                        <View style={{ width: w.im - 8, height: fotoAlt }} />
+                      )}
+                    </View>
+                    <View style={[s.td, fundo, { width: w.mt }]}><Text style={s.mat}>{i.material}</Text></View>
+                    <View style={[s.td, fundo, { flex: 1 }]}><Text>{i.texto}</Text></View>
+                    {medidas ? <View style={[s.td, fundo, { width: w.md }]}><Text style={{ fontSize: 7.2, color: "#444" }}>{i.medidas}</Text></View> : null}
+                    <View style={[s.td, fundo, { width: w.qt, alignItems: "center" }]}><Text style={{ fontWeight: 700 }}>{i.qtd}</Text></View>
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
 
         <View style={s.rodape} fixed>
-          <View>
-            <Text style={s.rodTxt}>{arquivo}</Text>
-            <Text style={s.rodTxt} render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
-          </View>
-          {logo ? <Image style={s.logo} src={logo} /> : null}
+          <Text>{arquivo}</Text>
+          <Text render={({ pageNumber, totalPages }) => `Página ${pageNumber} de ${totalPages}`} />
         </View>
       </Page>
     </Document>

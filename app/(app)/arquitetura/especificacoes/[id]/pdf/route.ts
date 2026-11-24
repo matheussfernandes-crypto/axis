@@ -63,9 +63,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const buffer = await renderToBuffer(
     EspecificacaoPdf({
       papel: nota?.papel === "a4p" ? "A4" : "A3",
-      titulo: `Tabela de ${g.label}`,
-      cliente: projeto.cliente ?? undefined,
-      obra: [projeto.codigo, projeto.titulo, projeto.unidade && `Unidade ${projeto.unidade}`].filter(Boolean).join(" · "),
+      titulo: `Especificação · ${g.label}`,
       subtitulo: [projeto.codigo, projeto.titulo, projeto.unidade && `Unidade ${projeto.unidade}`, projeto.cliente].filter(Boolean).join(" · "),
       rev,
       emitido: new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }),
