@@ -41,11 +41,23 @@ function limparVidro(v: unknown): Vidro {
 }
 
 // ---------- projetos ----------
-export async function salvarProjeto(dados: { id?: string; codigo?: string; titulo: string; cliente?: string; obra_id?: string | null; unidade?: string }) {
+export async function salvarProjeto(dados: { id?: string; codigo?: string; titulo: string; cliente?: string; obra?: string; unidade?: string }) {
   const supabase = await exigirArquitetura();
   const titulo = t(dados.titulo);
   if (!titulo) throw new Error("Informe o nome do projeto (ex.: Apto 701).");
-  const linha = { codigo: t(dados.codigo) || null, titulo, cliente: t(dados.cliente) || null, obra_id: t(dados.obra_id) || null, unidade: t(dados.unidade) || null, atualizado_em: agora() };
+  // Obra: se o nome bater com uma obra cadastrada, liga a ela; senão guarda o nome digitado (obra de cliente sem cadastro)
+  const obraTxt = t(dados.obra);
+  let obra_id: string | null = null;
+  if (obraTxt) {
+    const { data: obras } = await supabase.from("obras").select("id, nome");
+    const chave = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/s+/g, " ").trim();
+    obra_id = (obras ?? []).find((o) => chave(o.nome ?? "") === chave(obraTxt))?.id ?? null;
+  }
+  const linha = {
+    codigo: t(dados.codigo) || null, titulo, cliente: t(dados.cliente) || null,
+    obra_id, obra_nome: obra_id ? null : obraTxt || null,
+    unidade: t(dados.unidade) || null, atualizado_em: agora(),
+  };
   if (dados.id) {
     const { error } = await supabase.from("esp_projetos").update(linha).eq("id", dados.id);
     if (error) throw new Error(error.message);

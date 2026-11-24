@@ -9,7 +9,6 @@ import { createClient } from "@/lib/supabase/client";
 import { converter } from "@/lib/especificacoes/importar";
 import { enviarFoto } from "@/lib/especificacoes/imagem";
 import { fold, GRUPOS } from "@/lib/especificacoes/regras";
-import Selecao from "@/components/ui/Selecao";
 import { excluirProjeto, importarLinhas, salvarProjeto } from "../actions";
 import { LogoPadrao, pedirConfirmacao } from "../comum";
 import { btnIcone, btnPrim, btnSec, campo, erroCls, rotulo } from "../ui";
@@ -37,7 +36,7 @@ export default function ListaProjetos({ projetos, obras, logoPadrao }: { projeto
     try {
       const novo = await salvarProjeto({
         id, codigo: String(fd.get("codigo") ?? ""), titulo: String(fd.get("titulo") ?? ""), cliente: String(fd.get("cliente") ?? ""),
-        obra_id: String(fd.get("obra_id") ?? ""), unidade: String(fd.get("unidade") ?? ""),
+        obra: String(fd.get("obra") ?? ""), unidade: String(fd.get("unidade") ?? ""),
       });
       setEditando(null);
       if (!id) router.push(`/arquitetura/especificacoes/${novo}`);
@@ -195,10 +194,10 @@ function FormProjeto({
       </label>
       <label>
         <span className={rotulo}>Obra</span>
-        <Selecao name="obra_id" className="w-full" defaultValue={inicial?.obra_id ?? ""}>
-          <option value="">Nenhuma</option>
-          {obras.map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}
-        </Selecao>
+        <input name="obra" list="esp-obras" className={campo} placeholder="Digite o nome da obra" defaultValue={inicial?.obra ?? ""} autoComplete="off" />
+        <datalist id="esp-obras">
+          {obras.map((o) => <option key={o.id} value={o.nome} />)}
+        </datalist>
       </label>
       <label>
         <span className={rotulo}>Unidade</span>

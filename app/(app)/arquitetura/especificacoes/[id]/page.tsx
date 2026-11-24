@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function ProjetoPage({ params, searchParams }: { params: { id: string }; searchParams: { grupo?: string } }) {
   const supabase = await exigirArquiteturaPagina();
   const [{ data: projeto }, { data: itens }, { data: notas }, { data: modelos }] = await Promise.all([
-    supabase.from("esp_projetos").select("id, codigo, titulo, cliente, obra_id, unidade, logo").eq("id", params.id).maybeSingle(),
+    supabase.from("esp_projetos").select("id, codigo, titulo, cliente, obra_id, obra_nome, unidade, logo").eq("id", params.id).maybeSingle(),
     supabase.from("esp_itens").select("id, grupo, ambiente, material, referencia, medidas, qtd, img, ordem, vidro, precos").eq("projeto_id", params.id).order("ordem"),
     supabase.from("esp_notas").select("grupo, obs, rev, papel").eq("projeto_id", params.id),
     supabase.from("esp_modelos").select("id, grupo, material, referencia, medidas, marca, linha, acab, codigo, faixa, uso, valor_ref, precos, img, revisar, ordem").order("ordem"),
@@ -22,7 +22,7 @@ export default async function ProjetoPage({ params, searchParams }: { params: { 
   ]);
   return (
     <EditorProjeto
-      projeto={{ id: projeto.id, codigo: projeto.codigo, titulo: projeto.titulo, cliente: projeto.cliente, obra: obra?.nome ?? null, unidade: projeto.unidade, logo: projeto.logo ?? "" }}
+      projeto={{ id: projeto.id, codigo: projeto.codigo, titulo: projeto.titulo, cliente: projeto.cliente, obra: obra?.nome ?? projeto.obra_nome ?? null, unidade: projeto.unidade, logo: projeto.logo ?? "" }}
       itens={(itens ?? []).map((i) => ({ ...i, ordem: Number(i.ordem) })) as Item[]}
       notas={(notas ?? []) as Nota[]}
       modelos={(modelos ?? []) as Modelo[]}

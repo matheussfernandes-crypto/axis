@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export default async function EspecificacoesPage() {
   const supabase = await exigirArquiteturaPagina();
   const [{ data: projetos }, { data: itens }, { data: obras }, { data: pasta }] = await Promise.all([
-    supabase.from("esp_projetos").select("id, codigo, titulo, cliente, obra_id, unidade, atualizado_em").order("codigo", { ascending: false, nullsFirst: false }),
+    supabase.from("esp_projetos").select("id, codigo, titulo, cliente, obra_id, obra_nome, unidade, atualizado_em").order("codigo", { ascending: false, nullsFirst: false }),
     supabase.from("esp_itens").select("projeto_id, grupo"),
     supabase.from("obras").select("id, nome").order("nome"),
     supabase.rpc("minha_construtora"),
@@ -20,6 +20,6 @@ export default async function EspecificacoesPage() {
     c[i.grupo] = (c[i.grupo] ?? 0) + 1;
   }
   const nomes = new Map((obras ?? []).map((o) => [o.id, o.nome]));
-  const lista: ProjetoResumo[] = (projetos ?? []).map((p) => ({ ...p, qtd: conta[p.id] ?? {}, obra: p.obra_id ? nomes.get(p.obra_id) ?? null : null }));
+  const lista: ProjetoResumo[] = (projetos ?? []).map((p) => ({ ...p, qtd: conta[p.id] ?? {}, obra: (p.obra_id ? nomes.get(p.obra_id) : null) ?? p.obra_nome ?? null }));
   return <ListaProjetos projetos={lista} obras={obras ?? []} logoPadrao={logo?.signedUrl ?? null} />;
 }

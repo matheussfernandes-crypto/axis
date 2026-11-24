@@ -152,7 +152,7 @@ export default function EditorProjeto({
           <p className="text-xs text-ink-400">
             {projeto.obra || projeto.unidade
               ? [projeto.obra && `Obra: ${projeto.obra}`, projeto.unidade && `Unidade: ${projeto.unidade}`].filter(Boolean).join(" · ")
-              : "Sem obra ligada (edite o projeto na lista)"}
+              : "Sem obra (edite o projeto na lista)"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
