@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, FileText, ListChecks, Pencil, Plus, Trash2, Type } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowUp, BookOpen, Calculator, FileText, ListChecks, Pencil, Plus, Trash2, Type } from "lucide-react";
 import Selecao from "@/components/ui/Selecao";
 import {
   AMBIENTES_SUGERIDOS, GRUPOS, VID, descVidro, fold, medidasVidro, refDoModelo, tituloAmbiente, type Grupo, type Vidro,
@@ -197,6 +197,10 @@ export default function EditorProjeto({
               <button type="button" className={btnIcone} title="Renomear ambiente" onClick={() => renomear(amb)}>
                 <Pencil className="h-3.5 w-3.5" />
               </button>
+              {(() => {
+                const soma = lista.reduce((t, i) => t + (mediaPrecos(i.precos) ?? 0) * i.qtd, 0);
+                return soma > 0 ? <span className="ml-2 rounded-full bg-surface-subtle px-2 py-0.5 text-xs font-semibold text-ink-700" title="Soma das médias × quantidade dos itens deste ambiente">Total do ambiente: {brl(soma)}</span> : null;
+              })()}
             </div>
             <div className="flex flex-wrap gap-2">
               <button type="button" className={btnSec} onClick={() => abrirSugestoes(amb, true)} title="Itens que costumam existir neste ambiente">
@@ -316,14 +320,13 @@ export default function EditorProjeto({
 
 function NotaGrupo({ projetoId, grupo, titulo, nota, total }: { projetoId: string; grupo: Grupo; titulo: string; nota: Nota; total: number }) {
   const router = useRouter();
-  const [valores, setValores] = useState(false);
   const [obs, setObs] = useState(nota.obs);
   const [rev, setRev] = useState(nota.rev);
   const [papel, setPapel] = useState(nota.papel === "a4p" ? "a4p" : "a3p");
   const [estado, setEstado] = useState<string | null>(null);
   const mudou = obs !== nota.obs || rev !== nota.rev || papel !== (nota.papel === "a4p" ? "a4p" : "a3p");
   return (
-    <div className="card grid gap-3 sm:grid-cols-[1fr_90px_150px_auto_auto] sm:items-end">
+    <div className="card grid gap-3 sm:grid-cols-[1fr_90px_150px_auto_auto_auto] sm:items-end">
       <label>
         <span className={rotulo}>Observações da folha · {titulo}</span>
         <textarea className={campo} rows={2} value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: Atenção: BASE DOCOL em todos os ambientes." />
@@ -357,25 +360,38 @@ function NotaGrupo({ projetoId, grupo, titulo, nota, total }: { projetoId: strin
         {estado === "…" ? "Salvando…" : "Salvar"}
       </button>
       {mudou ? (
-        <button type="button" className={btnPrim} disabled title="Salve antes de gerar o PDF">
-          <FileText className="h-4 w-4" /> Gerar PDF
-        </button>
+        <>
+          <button type="button" className={btnPrim} disabled title="Salve antes de gerar o PDF">
+            <FileText className="h-4 w-4" /> Gerar PDF
+          </button>
+          <button type="button" className={btnSec} disabled title="Salve antes de gerar o PDF">
+            <Calculator className="h-4 w-4" /> PDF com valores médios
+          </button>
+        </>
       ) : (
-        <VisualizadorPdf
-          href={`/arquitetura/especificacoes/${projetoId}/pdf?grupo=${grupo}${valores ? "&valores=1" : ""}`}
-          titulo={`Especificação · ${titulo}${valores ? " · com valores" : ""}`}
-          className={btnPrim}
-        >
-          <FileText className="h-4 w-4" /> Gerar PDF
-        </VisualizadorPdf>
+        <>
+          <VisualizadorPdf
+            href={`/arquitetura/especificacoes/${projetoId}/pdf?grupo=${grupo}`}
+            titulo={`Especificação · ${titulo}`}
+            className={btnPrim}
+          >
+            <FileText className="h-4 w-4" /> Gerar PDF
+          </VisualizadorPdf>
+          <VisualizadorPdf
+            href={`/arquitetura/especificacoes/${projetoId}/pdf?grupo=${grupo}&valores=1`}
+            titulo={`Especificação · ${titulo} · com valores médios`}
+            className={btnSec}
+          >
+            <Calculator className="h-4 w-4" /> PDF com valores médios
+          </VisualizadorPdf>
+        </>
       )}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-500 sm:col-span-5">
-        <label className="flex items-center gap-2 text-sm text-ink-700">
-          <input type="checkbox" checked={valores} onChange={(e) => setValores(e.target.checked)} /> Gerar com valores médios (uso interno)
-        </label>
-        <span>{total > 0 ? `Total estimado desta folha: ${brl(total)} (média dos preços pesquisados × quantidade)` : "Nenhum item com preço ainda."}</span>
+      <div className="text-xs text-ink-500 sm:col-span-6">
+        {total > 0
+          ? <>Total estimado desta folha: <b className="text-ink-900">{brl(total)}</b> (média dos preços pesquisados × quantidade). O PDF com valores médios traz a soma de cada ambiente e o total geral — uso interno.</>
+          : "Nenhum item com preço ainda."}
       </div>
-      {estado && estado !== "…" && <p className="text-xs text-danger sm:col-span-5">{estado}</p>}
+      {estado && estado !== "…" && <p className="text-xs text-danger sm:col-span-6">{estado}</p>}
     </div>
   );
 }

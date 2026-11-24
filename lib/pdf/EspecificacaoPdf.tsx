@@ -107,7 +107,7 @@ export function EspecificacaoPdf({
               })}
               {valores ? (
                 <View style={s.total} wrap={false}>
-                  <Text>Total {a.nome}: {brl(somaAmb(a))}</Text>
+                  <Text>Total {a.nome}: {somaAmb(a) > 0 ? brl(somaAmb(a)) : "sem preço pesquisado"}</Text>
                 </View>
               ) : null}
             </View>
