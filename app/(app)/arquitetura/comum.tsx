@@ -10,6 +10,7 @@ import { enviarFoto, enviarLogo, enviarLogoPadrao, tirarLogoPadrao, urlImg } fro
 import { salvarLogoProjeto } from "./actions";
 import { FAIXAS, fold, type Grupo, type Vidro } from "@/lib/especificacoes/regras";
 import { esquemaVidro } from "@/lib/especificacoes/desenho";
+import { MAX_PRECOS, brl, limparPrecos, mediaPrecos, type Preco } from "@/lib/especificacoes/precos";
 import { btnIcone, btnSec, campo } from "./ui";
 
 /** Confirmação simples (mesmo padrão do resto do Axis). */
@@ -20,7 +21,44 @@ export async function pedirConfirmacao({ texto }: { texto: string; botao?: strin
 export type Modelo = {
   id: string; grupo: Grupo; material: string; referencia: string; medidas: string; marca: string; linha: string; acab: string;
   codigo: string; faixa: number | null; uso: string; valor_ref: number | null; img: string; revisar: boolean; ordem: number;
+  precos?: Preco[];
 };
+
+/** Até 3 preços pesquisados (loja, valor, link) e a média deles. */
+export function PrecosCampo({ valor, onChange }: { valor: Preco[]; onChange: (p: Preco[]) => void }) {
+  const linhas: Preco[] = Array.from({ length: MAX_PRECOS }, (_, k) => valor[k] ?? { loja: "", valor: 0, link: "" });
+  const media = mediaPrecos(valor);
+  const set = (k: number, p: Partial<Preco>) => {
+    const nova = linhas.map((x, j) => (j === k ? { ...x, ...p, data: new Date().toISOString().slice(0, 10) } : x));
+    onChange(nova.filter((x) => x.loja || x.valor || x.link));
+  };
+  return (
+    <div className="space-y-2">
+      {linhas.map((p, k) => (
+        <div key={k} className="grid gap-2 sm:grid-cols-[150px_110px_1fr]">
+          <input className={campo} placeholder={`Loja ${k + 1}`} value={p.loja} onChange={(e) => set(k, { loja: e.target.value })} />
+          <input
+            className={campo}
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="R$"
+            value={p.valor || ""}
+            onChange={(e) => set(k, { valor: Number(e.target.value) || 0 })}
+          />
+          <input className={campo} placeholder="Link do produto (opcional)" value={p.link ?? ""} onChange={(e) => set(k, { link: e.target.value })} />
+        </div>
+      ))}
+      <p className="text-xs text-ink-500">
+        {media ? (
+          <>Média: <b className="text-primaryDark">{brl(media)}</b> ({limparPrecos(valor).length} preço(s){valor.find((x) => x.data) ? `, pesquisado em ${new Date(valor.map((x) => x.data ?? "").sort().pop()! + "T12:00").toLocaleDateString("pt-BR")}` : ""})</>
+        ) : (
+          "Sem preços: a média aparece quando houver pelo menos um valor."
+        )}
+      </p>
+    </div>
+  );
+}
 
 export function Janela({ titulo, onFechar, children, largura = "max-w-2xl" }: { titulo: string; onFechar: () => void; children: React.ReactNode; largura?: string }) {
   const [montado, setMontado] = useState(false);

@@ -11,9 +11,9 @@ export default async function ProjetoPage({ params, searchParams }: { params: { 
   const supabase = await exigirArquiteturaPagina();
   const [{ data: projeto }, { data: itens }, { data: notas }, { data: modelos }] = await Promise.all([
     supabase.from("esp_projetos").select("id, codigo, titulo, cliente, obra_id, unidade, logo").eq("id", params.id).maybeSingle(),
-    supabase.from("esp_itens").select("id, grupo, ambiente, material, referencia, medidas, qtd, img, ordem, vidro").eq("projeto_id", params.id).order("ordem"),
+    supabase.from("esp_itens").select("id, grupo, ambiente, material, referencia, medidas, qtd, img, ordem, vidro, precos").eq("projeto_id", params.id).order("ordem"),
     supabase.from("esp_notas").select("grupo, obs, rev, papel").eq("projeto_id", params.id),
-    supabase.from("esp_modelos").select("id, grupo, material, referencia, medidas, marca, linha, acab, codigo, faixa, uso, valor_ref, img, revisar, ordem").order("ordem"),
+    supabase.from("esp_modelos").select("id, grupo, material, referencia, medidas, marca, linha, acab, codigo, faixa, uso, valor_ref, precos, img, revisar, ordem").order("ordem"),
   ]);
   if (!projeto) notFound();
   const [assinadas, { data: obra }] = await Promise.all([

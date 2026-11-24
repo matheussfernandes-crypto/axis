@@ -10,13 +10,15 @@ import {
 } from "@/lib/especificacoes/regras";
 import { sugestoesDoAmbiente } from "@/lib/especificacoes/texto";
 import { criarItens, excluirAmbiente, excluirItem, moverItem, renomearAmbiente, salvarItem, salvarNota } from "../../actions";
-import { DesenhoVidro, FotoCampo, Janela, LogoProjeto, Miniatura, SeletorModelo, pedirConfirmacao, type Modelo } from "../../comum";
+import { DesenhoVidro, FotoCampo, Janela, LogoProjeto, Miniatura, PrecosCampo, SeletorModelo, pedirConfirmacao, type Modelo } from "../../comum";
+import { brl, mediaPrecos, type Preco } from "@/lib/especificacoes/precos";
 import { btnIcone, btnPrim, btnSec, campo, erroCls, rotulo } from "../../ui";
 import VisualizadorPdf from "@/components/contratos/VisualizadorPdf";
 import TextoLivre from "./TextoLivre";
 
 export type Item = {
   id: string; grupo: Grupo; ambiente: string; material: string; referencia: string; medidas: string; qtd: number; img: string; ordem: number; vidro: Vidro | null;
+  precos?: Preco[];
 };
 export type Nota = { grupo: Grupo; obs: string; rev: string; papel: string };
 type Projeto = { id: string; codigo: string | null; titulo: string; cliente: string | null; obra: string | null; unidade: string | null; logo: string };
@@ -178,7 +180,14 @@ export default function EditorProjeto({
 
       {erro && <div className={erroCls}>{erro}</div>}
 
-      <NotaGrupo key={grupo + nota.rev + nota.obs + nota.papel} projetoId={projeto.id} grupo={grupo} titulo={g.titulo} nota={nota} />
+      <NotaGrupo
+        key={grupo + nota.rev + nota.obs + nota.papel}
+        projetoId={projeto.id}
+        grupo={grupo}
+        titulo={g.titulo}
+        nota={nota}
+        total={itens.filter((i) => i.grupo === grupo).reduce((s, i) => s + (mediaPrecos(i.precos) ?? 0) * i.qtd, 0)}
+      />
 
       {ambientes.map(([amb, lista]) => (
         <div key={amb} className="card space-y-2">
@@ -217,6 +226,12 @@ export default function EditorProjeto({
                   </div>
                   <div className={`text-sm ${i.referencia ? "text-ink-900" : "italic text-ink-400"}`}>{i.referencia || "Falta definir o modelo"}</div>
                   {g.medidas && i.medidas && <div className="whitespace-pre-line text-xs text-ink-500">{i.medidas}</div>}
+                  {mediaPrecos(i.precos) && (
+                    <div className="text-xs text-ink-500">
+                      Média {brl(mediaPrecos(i.precos)!)}
+                      {i.qtd > 1 && ` · total ${brl(mediaPrecos(i.precos)! * i.qtd)}`} ({i.precos!.length} preço{i.precos!.length > 1 ? "s" : ""})
+                    </div>
+                  )}
                 </button>
                 <div className="flex shrink-0 items-center">
                   <button type="button" className={btnIcone} title="Subir" disabled={k === 0} onClick={() => mover(lista, k, -1)}>
@@ -299,8 +314,9 @@ export default function EditorProjeto({
   );
 }
 
-function NotaGrupo({ projetoId, grupo, titulo, nota }: { projetoId: string; grupo: Grupo; titulo: string; nota: Nota }) {
+function NotaGrupo({ projetoId, grupo, titulo, nota, total }: { projetoId: string; grupo: Grupo; titulo: string; nota: Nota; total: number }) {
   const router = useRouter();
+  const [valores, setValores] = useState(false);
   const [obs, setObs] = useState(nota.obs);
   const [rev, setRev] = useState(nota.rev);
   const [papel, setPapel] = useState(nota.papel === "a4p" ? "a4p" : "a3p");
@@ -345,10 +361,20 @@ function NotaGrupo({ projetoId, grupo, titulo, nota }: { projetoId: string; grup
           <FileText className="h-4 w-4" /> Gerar PDF
         </button>
       ) : (
-        <VisualizadorPdf href={`/arquitetura/especificacoes/${projetoId}/pdf?grupo=${grupo}`} titulo={`Especificação · ${titulo}`} className={btnPrim}>
+        <VisualizadorPdf
+          href={`/arquitetura/especificacoes/${projetoId}/pdf?grupo=${grupo}${valores ? "&valores=1" : ""}`}
+          titulo={`Especificação · ${titulo}${valores ? " · com valores" : ""}`}
+          className={btnPrim}
+        >
           <FileText className="h-4 w-4" /> Gerar PDF
         </VisualizadorPdf>
       )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink-500 sm:col-span-5">
+        <label className="flex items-center gap-2 text-sm text-ink-700">
+          <input type="checkbox" checked={valores} onChange={(e) => setValores(e.target.checked)} /> Gerar com valores médios (uso interno)
+        </label>
+        <span>{total > 0 ? `Total estimado desta folha: ${brl(total)} (média dos preços pesquisados × quantidade)` : "Nenhum item com preço ainda."}</span>
+      </div>
       {estado && estado !== "…" && <p className="text-xs text-danger sm:col-span-5">{estado}</p>}
     </div>
   );
@@ -374,7 +400,10 @@ function FormItem({
   );
 
   function escolher(m: Modelo) {
-    setD((x) => ({ ...x, material: m.material || x.material, referencia: refDoModelo(m.referencia, m.marca), medidas: m.medidas || x.medidas, img: m.img || x.img }));
+    setD((x) => ({
+      ...x, material: m.material || x.material, referencia: refDoModelo(m.referencia, m.marca), medidas: m.medidas || x.medidas, img: m.img || x.img,
+      precos: m.precos?.length ? m.precos : x.precos,
+    }));
     setEscolhendo(false);
   }
 
@@ -494,6 +523,11 @@ function FormItem({
           <div>
             <span className={rotulo}>Foto</span>
             <FotoCampo valor={d.img} onChange={(img) => setD({ ...d, img })} assinadas={assinadas} />
+          </div>
+
+          <div>
+            <span className={rotulo}>Preços pesquisados (até 3, valor unitário)</span>
+            <PrecosCampo valor={d.precos ?? []} onChange={(precos) => setD({ ...d, precos })} />
           </div>
 
           {erro && <div className={erroCls}>{erro}</div>}

@@ -7,7 +7,7 @@ import { AlertTriangle, ArrowLeft, Pencil, Plus, Search, Trash2 } from "lucide-r
 import Selecao from "@/components/ui/Selecao";
 import { FAIXAS, GRUPOS, USOS, fold, type Grupo } from "@/lib/especificacoes/regras";
 import { excluirModelo, salvarModelo } from "../actions";
-import { Faixa, FotoCampo, Janela, Miniatura, pedirConfirmacao, type Modelo } from "../comum";
+import { Faixa, FotoCampo, Janela, Miniatura, PrecosCampo, pedirConfirmacao, type Modelo } from "../comum";
 import { btnIcone, btnPrim, btnSec, campo, erroCls, rotulo } from "../ui";
 
 const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -129,7 +129,7 @@ export default function Catalogo({ modelos, assinadas }: { modelos: Modelo[]; as
                 </div>
                 <div className="text-sm text-ink-900">{m.referencia}</div>
                 <div className="text-xs text-ink-500">
-                  {[m.marca, m.linha, m.acab, m.codigo && `cód. ${m.codigo}`, m.valor_ref && brl(Number(m.valor_ref))].filter(Boolean).join(" · ")}
+                  {[m.marca, m.linha, m.acab, m.codigo && `cód. ${m.codigo}`, m.valor_ref && `média ${brl(Number(m.valor_ref))}${m.precos?.length ? ` (${m.precos.length} preço${m.precos.length > 1 ? "s" : ""})` : ""}`].filter(Boolean).join(" · ")}
                 </div>
               </button>
               <button type="button" className={btnIcone} title="Editar" onClick={() => setEditando(m)}>
@@ -179,7 +179,7 @@ function FormModelo({
       await salvarModelo({
         id: d.id, grupo: (d.grupo ?? "metais") as Grupo, material: d.material ?? "", referencia: d.referencia ?? "", medidas: d.medidas ?? "",
         marca: d.marca ?? "", linha: d.linha ?? "", acab: d.acab ?? "", codigo: d.codigo ?? "", faixa: d.faixa ?? null, uso: d.uso ?? "g",
-        valor_ref: d.valor_ref ?? null, img: d.img ?? "", revisar: !!d.revisar,
+        precos: d.precos ?? [], img: d.img ?? "", revisar: !!d.revisar,
       });
       onSalvo();
     } catch (e: any) {
@@ -227,7 +227,7 @@ function FormModelo({
             <input className={campo} value={d.codigo ?? ""} onChange={(e) => set({ codigo: e.target.value })} />
           </label>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <label>
             <span className={rotulo}>Faixa</span>
             <Selecao className="w-full" value={d.faixa ? String(d.faixa) : ""} onChange={(e) => set({ faixa: e.target.value ? Number(e.target.value) : null })}>
@@ -241,10 +241,10 @@ function FormModelo({
               {Object.entries(USOS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Selecao>
           </label>
-          <label>
-            <span className={rotulo}>Valor de referência (R$)</span>
-            <input className={campo} type="number" min={0} step="0.01" value={d.valor_ref ?? ""} onChange={(e) => set({ valor_ref: e.target.value ? Number(e.target.value) : null })} />
-          </label>
+        </div>
+        <div>
+          <span className={rotulo}>Preços pesquisados (até 3) · a média vira o valor de referência</span>
+          <PrecosCampo valor={d.precos ?? []} onChange={(precos) => set({ precos })} />
         </div>
         {g.medidas && (
           <label className="block">

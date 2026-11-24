@@ -6,8 +6,10 @@ import { Circle, Document, Image, Page, Path, Polygon, Rect, StyleSheet, Svg, Te
 // (forçar um bloco maior que a página a ficar inteiro trava o gerador).
 // Sai só com o logo enviado no projeto: nenhum nome de sistema aparece na folha.
 
-export type ItemPdf = { id: string; material: string; texto: string; medidas: string; qtd: number; foto?: string; desenho?: string };
+export type ItemPdf = { id: string; material: string; texto: string; medidas: string; qtd: number; foto?: string; desenho?: string; media?: number | null };
 export type AmbientePdf = { nome: string; itens: ItemPdf[] };
+
+const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 const COR = { bege: "#d3c7b6", escuro: "#111111", linha: "#d9d9d9", zebra: "#f6f6f6", texto: "#151515", suave: "#6e6e6e" };
 
@@ -30,17 +32,22 @@ const s = StyleSheet.create({
   td: { fontSize: 7.6, paddingVertical: 4, paddingHorizontal: 4, borderWidth: 0.4, borderColor: COR.linha, justifyContent: "center" },
   mat: { fontSize: 7, fontWeight: 700, color: COR.escuro },
   vazio: { fontSize: 9, color: COR.suave, marginTop: 20, textAlign: "center" },
+  total: { flexDirection: "row", justifyContent: "flex-end", paddingVertical: 4, paddingHorizontal: 4, fontSize: 7.6, fontWeight: 700, color: COR.escuro, borderBottomWidth: 0.4, borderBottomColor: COR.linha },
+  totalGeral: { marginTop: 4, flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: COR.bege, paddingVertical: 6, paddingHorizontal: 8, fontSize: 9, fontWeight: 700, color: COR.escuro },
   rodape: { position: "absolute", bottom: 14, left: 26, right: 26, flexDirection: "row", justifyContent: "space-between", fontSize: 6.5, color: COR.suave, borderTopWidth: 0.5, borderTopColor: COR.linha, paddingTop: 4 },
 });
 
 export function EspecificacaoPdf({
-  papel, titulo, subtitulo, rev, emitido, obs, logo, medidas, vidros, arquivo, ambientes,
+  papel, titulo, subtitulo, rev, emitido, obs, logo, medidas, vidros, arquivo, ambientes, valores = false, pesquisa,
 }: {
   papel: "A3" | "A4"; titulo: string; subtitulo: string; rev: string; emitido: string; obs: string; logo?: string;
   medidas: boolean; vidros: boolean; arquivo: string; ambientes: AmbientePdf[];
+  /** coluna com a média dos preços pesquisados e totais (folha de uso interno) */ valores?: boolean; pesquisa?: string;
 }) {
   const a3 = papel === "A3";
-  const w = { im: vidros ? (a3 ? 130 : 110) : a3 ? 90 : 76, mt: a3 ? 130 : 110, md: a3 ? 130 : 110, qt: 36 };
+  const w = { im: vidros ? (a3 ? 130 : 110) : a3 ? 90 : 76, mt: a3 ? 130 : 110, md: a3 ? 130 : 110, qt: 36, vl: a3 ? 90 : 76 };
+  const somaAmb = (a: AmbientePdf) => a.itens.reduce((t, i) => t + (i.media ?? 0) * i.qtd, 0);
+  const totalGeral = ambientes.reduce((t, a) => t + somaAmb(a), 0);
   const fotoAlt = vidros ? (a3 ? 84 : 70) : a3 ? 58 : 48;
   return (
     <Document title={arquivo}>
@@ -70,6 +77,7 @@ export function EspecificacaoPdf({
                 <Text style={[s.th, { flex: 1 }]}>{vidros ? "Descrição" : "Referência"}</Text>
                 {medidas ? <Text style={[s.th, { width: w.md }]}>Medidas</Text> : null}
                 <Text style={[s.th, { width: w.qt, textAlign: "center" }]}>Qtd.</Text>
+                {valores ? <Text style={[s.th, { width: w.vl, textAlign: "right" }]}>Valor médio</Text> : null}
               </View>
               {a.itens.map((i, k) => {
                 const fundo = k % 2 ? { backgroundColor: COR.zebra } : {};
@@ -88,12 +96,35 @@ export function EspecificacaoPdf({
                     <View style={[s.td, fundo, { flex: 1 }]}><Text>{i.texto}</Text></View>
                     {medidas ? <View style={[s.td, fundo, { width: w.md }]}><Text style={{ fontSize: 7.2, color: "#444" }}>{i.medidas}</Text></View> : null}
                     <View style={[s.td, fundo, { width: w.qt, alignItems: "center" }]}><Text style={{ fontWeight: 700 }}>{i.qtd}</Text></View>
+                    {valores ? (
+                      <View style={[s.td, fundo, { width: w.vl, alignItems: "flex-end" }]}>
+                        <Text>{i.media ? brl(i.media) : "—"}</Text>
+                        {i.media && i.qtd > 1 ? <Text style={{ fontSize: 6.4, color: COR.suave, marginTop: 2 }}>total {brl(i.media * i.qtd)}</Text> : null}
+                      </View>
+                    ) : null}
                   </View>
                 );
               })}
+              {valores ? (
+                <View style={s.total} wrap={false}>
+                  <Text>Total {a.nome}: {brl(somaAmb(a))}</Text>
+                </View>
+              ) : null}
             </View>
           ))}
         </View>
+
+        {valores && ambientes.length ? (
+          <View wrap={false}>
+            <View style={s.totalGeral}>
+              <Text>TOTAL ESTIMADO</Text>
+              <Text>{brl(totalGeral)}</Text>
+            </View>
+            <Text style={{ fontSize: 6.8, color: COR.suave, marginTop: 4 }}>
+              Valores de referência: média de até 3 preços pesquisados em lojas{pesquisa ? ` (pesquisa de ${pesquisa})` : ""}. Não é orçamento; preços podem mudar. Itens sem preço (—) não entram no total.
+            </Text>
+          </View>
+        ) : null}
 
         <View style={s.rodape} fixed>
           <Text>{arquivo}</Text>

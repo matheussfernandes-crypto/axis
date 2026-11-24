@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BUCKET_ESP, caminhoLogoPadrao, ehDoBucket } from "@/lib/especificacoes/imagem";
 import { esquemaVidro } from "@/lib/especificacoes/desenho";
 import { GRUPOS, descVidro, ehGrupo, fold, medidasVidro, type Grupo, type Vidro } from "@/lib/especificacoes/regras";
+import { dataPrecos, mediaPrecos } from "@/lib/especificacoes/precos";
 import { EspecificacaoPdf, type AmbientePdf } from "@/lib/pdf/EspecificacaoPdf";
 import { podeArquitetura } from "../../../acesso";
 
@@ -17,11 +18,13 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   const { data: perfil } = await supabase.from("perfis").select("setor, status, acessos").eq("id", user.id).single();
   if (!podeArquitetura(perfil)) return NextResponse.json({ erro: "Acesso restrito." }, { status: 403 });
 
-  const g0 = new URL(request.url).searchParams.get("grupo");
+  const busca = new URL(request.url).searchParams;
+  const g0 = busca.get("grupo");
+  const valores = busca.get("valores") === "1";
   const grupo: Grupo = ehGrupo(g0) ? g0 : "metais";
   const [{ data: projeto }, { data: itens }, { data: nota }] = await Promise.all([
     supabase.from("esp_projetos").select("id, codigo, titulo, cliente, unidade, logo").eq("id", params.id).maybeSingle(),
-    supabase.from("esp_itens").select("id, ambiente, material, referencia, medidas, qtd, img, ordem, vidro").eq("projeto_id", params.id).eq("grupo", grupo).order("ordem"),
+    supabase.from("esp_itens").select("id, ambiente, material, referencia, medidas, qtd, img, ordem, vidro, precos").eq("projeto_id", params.id).eq("grupo", grupo).order("ordem"),
     supabase.from("esp_notas").select("obs, rev, papel").eq("projeto_id", params.id).eq("grupo", grupo).maybeSingle(),
   ]);
   if (!projeto) return NextResponse.json({ erro: "Projeto não encontrado." }, { status: 404 });
@@ -55,11 +58,14 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       qtd: i.qtd || 1,
       foto,
       desenho: !foto && vidros ? esquemaVidro(i.material, v) : undefined,
+      media: valores ? mediaPrecos(i.precos) : null,
     });
   }
 
   const rev = (nota?.rev || "R0").toUpperCase();
-  const arquivo = ["ESPECIFICAÇÃO", g.label, projeto.titulo, rev].filter(Boolean).join(" - ").toUpperCase().replace(/[\\/:*?"<>|]/g, "");
+  const datas = (itens ?? []).map((i) => dataPrecos(i.precos)).filter(Boolean).sort() as string[];
+  const pesquisa = datas.length ? new Date(datas[datas.length - 1] + "T12:00").toLocaleDateString("pt-BR") : undefined;
+  const arquivo = ["ESPECIFICAÇÃO", g.label, projeto.titulo, rev, valores && "COM VALORES"].filter(Boolean).join(" - ").toUpperCase().replace(/[\\/:*?"<>|]/g, "");
   const buffer = await renderToBuffer(
     EspecificacaoPdf({
       papel: nota?.papel === "a4p" ? "A4" : "A3",
@@ -72,6 +78,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       medidas: g.medidas,
       vidros,
       arquivo,
+      valores,
+      pesquisa,
       ambientes: Array.from(ambientes.values()),
     })
   );

@@ -10,7 +10,7 @@ export default async function CatalogoPage() {
   const supabase = await exigirArquiteturaPagina();
   const { data } = await supabase
     .from("esp_modelos")
-    .select("id, grupo, material, referencia, medidas, marca, linha, acab, codigo, faixa, uso, valor_ref, img, revisar, ordem")
+    .select("id, grupo, material, referencia, medidas, marca, linha, acab, codigo, faixa, uso, valor_ref, precos, img, revisar, ordem")
     .order("ordem");
   const modelos = (data ?? []) as Modelo[];
   const assinadas = await assinarImagens(supabase, modelos.map((m) => m.img));

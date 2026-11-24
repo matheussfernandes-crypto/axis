@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { podeArquitetura } from "./acesso";
 import { ehGrupo, tituloAmbiente, CAMPOS_VIDRO, descVidro, medidasVidro, type Grupo, type Vidro } from "@/lib/especificacoes/regras";
 import { ehDoBucket } from "@/lib/especificacoes/imagem";
+import { dataPrecos, limparPrecos, mediaPrecos, type Preco } from "@/lib/especificacoes/precos";
 import type { LinhaItem, LinhaModelo, LinhaNota, LinhaProjeto } from "@/lib/especificacoes/importar";
 
 async function exigirArquitetura() {
@@ -68,7 +69,7 @@ export async function excluirProjeto(id: string) {
 // ---------- itens ----------
 export type DadosItem = {
   id?: string; projeto_id: string; grupo: Grupo; ambiente: string; material: string; referencia: string;
-  medidas?: string; qtd?: number; img?: string; vidro?: Vidro | null; ordem?: number;
+  medidas?: string; qtd?: number; img?: string; vidro?: Vidro | null; ordem?: number; precos?: Preco[];
 };
 
 export async function salvarItem(d: DadosItem) {
@@ -88,7 +89,7 @@ export async function salvarItem(d: DadosItem) {
   }
   const linha = {
     projeto_id: d.projeto_id, grupo: d.grupo, ambiente, material, referencia, medidas,
-    qtd: Math.max(1, Math.floor(Number(d.qtd) || 1)), img: imgValida(d.img), vidro, atualizado_em: agora(),
+    qtd: Math.max(1, Math.floor(Number(d.qtd) || 1)), img: imgValida(d.img), vidro, precos: limparPrecos(d.precos), atualizado_em: agora(),
   };
   if (d.id) {
     const { error } = await supabase.from("esp_itens").update(linha).eq("id", d.id);
@@ -161,7 +162,7 @@ export async function salvarNota(projetoId: string, grupo: Grupo, dados: { obs: 
 // ---------- catálogo de modelos ----------
 export type DadosModelo = {
   id?: string; grupo: Grupo; material: string; referencia: string; medidas?: string; marca?: string; linha?: string;
-  acab?: string; codigo?: string; faixa?: number | null; uso?: string; valor_ref?: number | null; img?: string; revisar?: boolean;
+  acab?: string; codigo?: string; faixa?: number | null; uso?: string; precos?: Preco[]; img?: string; revisar?: boolean;
 };
 
 export async function salvarModelo(d: DadosModelo) {
@@ -171,11 +172,13 @@ export async function salvarModelo(d: DadosModelo) {
   const referencia = t(d.referencia);
   if (!material || !referencia) throw new Error("Informe o item e a descrição do modelo.");
   const faixa = Number(d.faixa);
-  const valor = Number(d.valor_ref);
+  const precos = limparPrecos(d.precos);
+  const valor = mediaPrecos(precos) ?? 0;
   const linha = {
+    precos,
     grupo: d.grupo, material, referencia, medidas: t(d.medidas), marca: t(d.marca).toUpperCase(), linha: t(d.linha), acab: t(d.acab),
     codigo: t(d.codigo), faixa: faixa >= 1 && faixa <= 3 ? faixa : null, uso: ["b", "c", "s", "g"].includes(t(d.uso)) ? t(d.uso) : "g",
-    valor_ref: valor > 0 ? valor : null, valor_data: valor > 0 ? agora().slice(0, 10) : null, img: imgValida(d.img), revisar: !!d.revisar,
+    valor_ref: valor > 0 ? valor : null, valor_data: valor > 0 ? dataPrecos(precos) : null, img: imgValida(d.img), revisar: !!d.revisar,
     atualizado_em: agora(),
   };
   if (d.id) {
