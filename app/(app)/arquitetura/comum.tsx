@@ -101,7 +101,7 @@ export function Faixa({ f }: { f: number | null }) {
   if (!f || !FAIXAS[f]) return null;
   return (
     <span title={FAIXAS[f][1]} className="rounded-full bg-surface-subtle px-2 py-0.5 text-[11px] font-semibold text-primaryDark">
-      {FAIXAS[f][0]}
+      {FAIXAS[f][1]}
     </span>
   );
 }

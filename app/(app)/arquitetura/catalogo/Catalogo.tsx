@@ -60,7 +60,7 @@ export default function Catalogo({ modelos, assinadas }: { modelos: Modelo[]; as
             <ArrowLeft className="h-3.5 w-3.5" /> Especificações
           </Link>
           <h1 className="text-lg font-semibold text-primaryDark">Catálogo de modelos</h1>
-          <p className="text-sm text-ink-500">Faixa: $ essencial · $$ intermediária · $$$ premium.</p>
+          <p className="text-sm text-ink-500">Separado por faixa: Básico · Intermediário · Alto Padrão.</p>
         </div>
         <button type="button" className={btnPrim} onClick={() => setEditando({ grupo, material, uso: "g", faixa: null, revisar: false, img: "" })}>
           <Plus className="h-4 w-4" /> Novo modelo
@@ -100,12 +100,20 @@ export default function Catalogo({ modelos, assinadas }: { modelos: Modelo[]; as
           </Selecao>
           <Selecao className="w-full" value={faixa} onChange={(e) => setFaixa(e.target.value)}>
             <option value="">Todas as faixas</option>
-            {[1, 2, 3].map((f) => <option key={f} value={String(f)}>{FAIXAS[f][0]} {FAIXAS[f][1]}</option>)}
+            {[1, 2, 3].map((f) => <option key={f} value={String(f)}>{FAIXAS[f][1]}</option>)}
           </Selecao>
         </div>
         <p className="text-xs text-ink-500">{lista.length} modelo(s)</p>
+        {[1, 2, 3, 0].map((fx) => {
+          const daFaixa = lista.filter((m) => (m.faixa && FAIXAS[m.faixa] ? m.faixa : 0) === fx);
+          if (!daFaixa.length) return null;
+          return (
+            <section key={fx}>
+              <h2 className="mt-2 border-b border-border pb-1 text-sm font-semibold uppercase tracking-wide text-primaryDark">
+                {fx ? FAIXAS[fx][1] : "Sem faixa"} <span className="ml-1 text-xs font-normal normal-case text-ink-400">{daFaixa.length}</span>
+              </h2>
         <ul className="divide-y divide-border">
-          {lista.map((m) => (
+          {daFaixa.map((m) => (
             <li key={m.id} className="flex items-center gap-3 py-2">
               <Miniatura img={m.img} assinadas={assinadas} tam="h-14 w-14" />
               <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setEditando(m)}>
@@ -133,6 +141,9 @@ export default function Catalogo({ modelos, assinadas }: { modelos: Modelo[]; as
             </li>
           ))}
         </ul>
+            </section>
+          );
+        })}
       </div>
 
       {editando && (
@@ -221,7 +232,7 @@ function FormModelo({
             <span className={rotulo}>Faixa</span>
             <Selecao className="w-full" value={d.faixa ? String(d.faixa) : ""} onChange={(e) => set({ faixa: e.target.value ? Number(e.target.value) : null })}>
               <option value="">—</option>
-              {[1, 2, 3].map((f) => <option key={f} value={String(f)}>{FAIXAS[f][0]} {FAIXAS[f][1]}</option>)}
+              {[1, 2, 3].map((f) => <option key={f} value={String(f)}>{FAIXAS[f][1]}</option>)}
             </Selecao>
           </label>
           <label>

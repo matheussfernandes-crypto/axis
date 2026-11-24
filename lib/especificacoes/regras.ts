@@ -10,7 +10,7 @@ export const GRUPOS: { id: Grupo; label: string; curto: string; titulo: string; 
 ];
 export const ehGrupo = (g: unknown): g is Grupo => g === "metais" || g === "eletros" || g === "vidros";
 
-export const FAIXAS: Record<number, [string, string]> = { 1: ["$", "Essencial"], 2: ["$$", "Intermediária"], 3: ["$$$", "Premium"] };
+export const FAIXAS: Record<number, [string, string]> = { 1: ["$", "Básico"], 2: ["$$", "Intermediário"], 3: ["$$$", "Alto Padrão"] };
 export const USOS: Record<string, string> = { b: "Banheiro", c: "Cozinha", s: "Serviço", g: "Qualquer" };
 
 export const AMBIENTES_SUGERIDOS = [
